@@ -1,0 +1,4 @@
+LIBRARY	"XDI_Demo"
+EXPORTS
+F4SEPlugin_Query
+F4SEPlugin_Load

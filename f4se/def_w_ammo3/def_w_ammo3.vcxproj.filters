@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="..\sscan\Pattern.cpp" />
+    <ClCompile Include="..\papfunctions.cpp" />
+    <ClCompile Include="..\Shared.cpp" />
+    <ClCompile Include="..\f4seee\f4seeeEvents.cpp" />
+    <ClCompile Include="..\HookUtil.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Shared.h" />
+    <ClInclude Include="consts.h" />
+    <ClInclude Include="main.h" />
+    <ClInclude Include="..\sscan\Pattern.h" />
+    <ClInclude Include="..\Events2.h" />
+    <ClInclude Include="..\Events3.h" />
+    <ClInclude Include="..\f4seee\f4seeeEvents.h" />
+    <ClInclude Include="..\HookUtil.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="exports.def" />
+  </ItemGroup>
+</Project>

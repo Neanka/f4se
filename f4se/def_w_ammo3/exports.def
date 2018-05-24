@@ -1,0 +1,4 @@
+LIBRARY	"def_w_ammo3"
+EXPORTS
+F4SEPlugin_Query
+F4SEPlugin_Load
