@@ -1365,6 +1365,7 @@ void RegisterForInput(bool bRegister) {
 void OnF4SEMessage(F4SEMessagingInterface::Message* msg) {
 	switch (msg->type) {
 	case F4SEMessagingInterface::kMessage_GameDataReady:
+		CheckArchiveInvalidation(mName);
 		fillarrays();
 		REGISTER_EVENT(LevelIncrease::Event, g_PRKF_LevelIncrease__EventSink);
 		static auto pLoadGameHandler = new TESLoadGameHandler();

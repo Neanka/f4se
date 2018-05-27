@@ -44,6 +44,18 @@ SInt8 CheckModDropClientService()
 	return 0;
 }
 
+void CheckArchiveInvalidation(std::string mName)
+{
+	Setting	* setting = GetINISetting("bInvalidateOlderFiles:Archive");
+	if (!setting->data.u8)
+	{
+		_WARNING("WARNING: Loose files disabled.");
+		MessageBox(NULL, (LPCSTR)("Check if loose files enabled. \n" + mName + " will NOT works properly.").c_str(), (LPCSTR)mName.c_str(), MB_OK | MB_ICONEXCLAMATION);
+		ShellExecute(0, 0, (LPCSTR)"https://www.nexusmods.com/fallout4/mods/4421/?", 0, 0, SW_SHOW);
+	}
+}
+
+
 namespace Utils {
 	bool ReadMemory(uintptr_t addr, void* data, size_t len) {
 		UInt32 oldProtect;

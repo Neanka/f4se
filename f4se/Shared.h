@@ -33,6 +33,9 @@ struct PRKFIsTaggedMessage
 
 SInt8 CheckModDropClientService();
 
+#include "f4se/GameSettings.h"
+void CheckArchiveInvalidation(std::string mName);
+
 namespace Utils {
 	bool ReadMemory(uintptr_t addr, void* data, size_t len);
 

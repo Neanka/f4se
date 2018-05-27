@@ -461,7 +461,7 @@ void ReadINIs(std::vector<WIN32_FIND_DATA>* arr, char* modSettingsDirectory)
 void OnF4SEMessage(F4SEMessagingInterface::Message* msg) {
 	switch (msg->type) {
 	case F4SEMessagingInterface::kMessage_GameDataReady:
-
+		CheckArchiveInvalidation(mName);
 		avifsPages.clear();
 		Skills.clear();
 		fillSkills();
@@ -515,7 +515,7 @@ void fillSkills()
 	_MESSAGE("total skills count: %i", Skills.size());
 }
 
-#include "f4se/GameSettings.h"
+
 
 void fillAvifsPages()
 {
@@ -907,6 +907,7 @@ extern "C"
 	bool F4SEPlugin_Load(const F4SEInterface *f4se)
 	{
 		logMessage("load");
+
 		if (CheckModDropClientService() == 0)
 		{
 			_WARNING("WARNING: ModDropClient found.");
