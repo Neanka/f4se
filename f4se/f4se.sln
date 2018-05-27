@@ -37,6 +37,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PipboyTabs", "PipboyTabs\Pi
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "customMenuTest", "customMenuTest\customMenuTest.vcxproj", "{73B63E98-D302-4B42-BFF4-D931BCF1C129}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ArmorEx", "ArmorEx\ArmorEx.vcxproj", "{2F24B9EF-CBAD-4C2D-AA48-84B9A6DA9E6F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug_VC14|x64 = Debug_VC14|x64
@@ -297,6 +299,20 @@ Global
 		{73B63E98-D302-4B42-BFF4-D931BCF1C129}.Release|x64.ActiveCfg = Release|x64
 		{73B63E98-D302-4B42-BFF4-D931BCF1C129}.Release|x64.Build.0 = Release|x64
 		{73B63E98-D302-4B42-BFF4-D931BCF1C129}.Release|x86.ActiveCfg = Release|x64
+		{2F24B9EF-CBAD-4C2D-AA48-84B9A6DA9E6F}.Debug_VC14|x64.ActiveCfg = Debug|x64
+		{2F24B9EF-CBAD-4C2D-AA48-84B9A6DA9E6F}.Debug_VC14|x64.Build.0 = Debug|x64
+		{2F24B9EF-CBAD-4C2D-AA48-84B9A6DA9E6F}.Debug_VC14|x86.ActiveCfg = Debug|x64
+		{2F24B9EF-CBAD-4C2D-AA48-84B9A6DA9E6F}.Debug_VC14|x86.Build.0 = Debug|x64
+		{2F24B9EF-CBAD-4C2D-AA48-84B9A6DA9E6F}.Debug|x64.ActiveCfg = Debug|x64
+		{2F24B9EF-CBAD-4C2D-AA48-84B9A6DA9E6F}.Debug|x64.Build.0 = Debug|x64
+		{2F24B9EF-CBAD-4C2D-AA48-84B9A6DA9E6F}.Debug|x86.ActiveCfg = Debug|x64
+		{2F24B9EF-CBAD-4C2D-AA48-84B9A6DA9E6F}.Release_VC14|x64.ActiveCfg = Release|x64
+		{2F24B9EF-CBAD-4C2D-AA48-84B9A6DA9E6F}.Release_VC14|x64.Build.0 = Release|x64
+		{2F24B9EF-CBAD-4C2D-AA48-84B9A6DA9E6F}.Release_VC14|x86.ActiveCfg = Debug|x64
+		{2F24B9EF-CBAD-4C2D-AA48-84B9A6DA9E6F}.Release_VC14|x86.Build.0 = Debug|x64
+		{2F24B9EF-CBAD-4C2D-AA48-84B9A6DA9E6F}.Release|x64.ActiveCfg = Release|x64
+		{2F24B9EF-CBAD-4C2D-AA48-84B9A6DA9E6F}.Release|x64.Build.0 = Release|x64
+		{2F24B9EF-CBAD-4C2D-AA48-84B9A6DA9E6F}.Release|x86.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
