@@ -850,6 +850,17 @@ bool RegisterFuncs(VirtualMachine* vm)
 	return true;
 }
 
+void PRKFMessageHandler(F4SEMessagingInterface::Message* msg) {
+	switch (msg->type)
+	{
+	case PRKFReadyMessage::kMessage_PRKFReady:
+	{
+		_DMESSAGE("PRKFReadyMessage recieved");
+	}
+	break;
+	}
+}
+
 extern "C"
 {
 
@@ -924,6 +935,7 @@ extern "C"
 			_MESSAGE("Scaleform Register Succeeded");
 		}
 		g_messaging->RegisterListener(g_pluginHandle, "F4SE", OnF4SEMessage);
+		g_messaging->RegisterListener(g_pluginHandle, nullptr, PRKFMessageHandler);
 		if (g_papyrus)
 		{
 			g_papyrus->Register(RegisterFuncs);

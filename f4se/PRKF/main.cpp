@@ -28,6 +28,8 @@ float SkillsPoints;
 SInt32 PPPerLevelToAdd = 0;
 SInt32 SPPerLevelToAdd = 0;
 UInt32 overrideMaxSkillsValue = 100;
+int disableVanillaPerks = 0;
+bool vanillaPerksPopulated = false;
 UInt32 pLVL;
 UInt8 pSex;
 int pSTR;
@@ -1013,7 +1015,7 @@ void fillarrays()
 	Skills.Clear();
 	std::vector<WIN32_FIND_DATA> modSettingFiles;
 	ReadINIs(&modSettingFiles);
-	int disableVanillaPerks = 0;
+
 	for (int i = 0; i < modSettingFiles.size(); i++) {
 		_MESSAGE("ini: %s", modSettingFiles[i].cFileName);
 		SInt8 iniVersion = _GetConfigOptionInt(modSettingFiles[i].cFileName, "Main", "INIVersion");
@@ -1088,24 +1090,32 @@ void fillarrays()
 		_MESSAGE("SPPerLevel %i", SPPerLevel);
 		SPPerLevelToAdd += SPPerLevel;
 	}
-	if (disableVanillaPerks)
-	{
-		_DMESSAGE("Vanilla perks will be disabled!");
-	}
-	else
-	{
-		_DMESSAGE("populate vanilla perks!");
-		populateVanilaPerks();
-	}
+
 	_DMESSAGE("Total PP to add per level: %i ", PPPerLevelToAdd);
 	_DMESSAGE("Total SP to add per level: %i ", SPPerLevelToAdd);
 	_MESSAGE("total perks count: %i", Perks.count);
 	_MESSAGE("total skills count: %i", Skills.count);
+	PRKFReadyMessage message;
+	g_messaging->Dispatch(g_pluginHandle, PRKFReadyMessage::kMessage_PRKFReady, (void*)&message, sizeof(PRKFReadyMessage*), nullptr);
 }
 
 bool UpdateMenu_int()
 {
 	_DMESSAGE("update menu");
+	if (!vanillaPerksPopulated)
+	{
+		vanillaPerksPopulated = true;
+		if (disableVanillaPerks)
+		{
+			_DMESSAGE("Vanilla perks disabled!");
+		}
+		else
+		{
+			_DMESSAGE("populate vanilla perks!");
+			populateVanilaPerks();
+		}
+	}
+
 	IMenu * menu = (*g_ui)->GetMenu(BSFixedString("LevelUpMenu"));
 	if (!menu)
 	{
@@ -1383,7 +1393,69 @@ void OnF4SEMessage(F4SEMessagingInterface::Message* msg) {
 	}
 }
 
-void PRKFIsTaggedMessageHandler(F4SEMessagingInterface::Message* msg) {
+bool AddData(PRKFAddDataMessage* msg)
+{
+	_MESSAGE("AddData: %s", msg->ININame.c_str());
+	_MESSAGE("ini version: %i", msg->INIVersion);
+	if (msg->INIVersion != CURRENT_INI_VERSION)
+	{
+		modsWithWrongIniVersion += msg->ININame;
+		modsWithWrongIniVersion += "\n";
+		return false;
+	}
+	_MESSAGE("disableVanillaPerks: %i", msg->disableVanillaPerks);
+	disableVanillaPerks |= msg->disableVanillaPerks;
+	if (msg->overrideMaxSkillsValue != 0)
+	{
+		if (overrideMaxSkillsValue != 100 && msg->overrideMaxSkillsValue != overrideMaxSkillsValue)
+		{
+			_WARNING("There are few ini files with overrideMaxSkillsValue. Last value will be used.");
+		}
+		overrideMaxSkillsValue = msg->overrideMaxSkillsValue;
+	}
+
+	if (msg->PerksList == nullptr) {
+		_DMESSAGE("form is not BGSListForm");
+	}
+	else
+	{
+		_DMESSAGE("form count %i", msg->PerksList->forms.count);
+		for (int j = 0; j < msg->PerksList->forms.count; j++)
+		{
+			BGSPerk * basePerk = DYNAMIC_CAST(msg->PerksList->forms.entries[j], TESForm, BGSPerk);
+			if (basePerk == nullptr) {
+				_DMESSAGE("entry is not a perk");
+				continue;
+			}
+			Perks.Push(basePerk);
+		}
+	}
+
+	if (msg->SkillsList == nullptr) {
+		_DMESSAGE("form is not BGSListForm");
+	}
+	else
+	{
+		_DMESSAGE("form count %i", msg->SkillsList->forms.count);
+		for (int j = 0; j < msg->SkillsList->forms.count; j++)
+		{
+			ActorValueInfo * baseSkill = DYNAMIC_CAST(msg->SkillsList->forms.entries[j], TESForm, ActorValueInfo);
+			if (baseSkill == nullptr) {
+				_DMESSAGE("entry is not a avif");
+				continue;
+			}
+			Skills.Push(baseSkill);
+		}
+	}
+	_MESSAGE("PPPerLevel %i", msg->PPPerLevel);
+	PPPerLevelToAdd += msg->PPPerLevel;
+	_MESSAGE("SPPerLevel %i", msg->SPPerLevel);
+	SPPerLevelToAdd += msg->SPPerLevel;
+
+	return true;
+}
+
+void PRKFMessageHandler(F4SEMessagingInterface::Message* msg) {
 	switch (msg->type)
 	{
 	case PRKFIsTaggedMessage::kMessage_PRKFIsTagged:
@@ -1391,8 +1463,16 @@ void PRKFIsTaggedMessageHandler(F4SEMessagingInterface::Message* msg) {
 		PRKFIsTaggedMessage * message = (PRKFIsTaggedMessage*)msg->data;
 		//_DMESSAGE("%i", message->formid);
 		message->tagged = PRKFSerialization::CheckTaggedSkill(message->formid);
+		break;
 	}
-	break;
+	case PRKFAddDataMessage::kMessage_PRKFAddData:
+	{
+		PRKFAddDataMessage * message = (PRKFAddDataMessage*)msg->data;
+		_DMESSAGE("PRKFAddDataMessage recieved");
+		AddData(message);
+		break;
+	}
+	
 	}
 }
 
@@ -1503,7 +1583,7 @@ extern "C"
 		LevelIncrease__Event_Dispatcher_Init();
 		RVAManager::UpdateAddresses(f4se->runtimeVersion);
 		g_messaging->RegisterListener(g_pluginHandle, "F4SE", OnF4SEMessage);
-		g_messaging->RegisterListener(g_pluginHandle, nullptr, PRKFIsTaggedMessageHandler);
+		g_messaging->RegisterListener(g_pluginHandle, nullptr, PRKFMessageHandler);
 		if (g_papyrus)
 		{
 			g_papyrus->Register(RegisterFuncs);

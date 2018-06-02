@@ -27,8 +27,33 @@ struct PRKFIsTaggedMessage
 		kMessage_PRKFIsTagged = 0x03000001
 	};
 
-	UInt32 formid = 0;
-	bool tagged = false;
+	UInt32			formid			= 0;
+	bool			tagged			= false;
+};
+
+struct PRKFReadyMessage
+{
+	enum
+	{
+		kMessage_PRKFReady = 0x03000003
+	};
+};
+
+struct PRKFAddDataMessage
+{
+	enum
+	{
+		kMessage_PRKFAddData = 0x03000002
+	};
+
+	std::string		ININame					= "";
+	UInt32			INIVersion				= 0;
+	int				disableVanillaPerks		= 0;
+	UInt32			overrideMaxSkillsValue	= 0;
+	BGSListForm*	PerksList				= nullptr;
+	BGSListForm*	SkillsList				= nullptr;
+	UInt8			PPPerLevel				= 0;
+	UInt8			SPPerLevel				= 0;
 };
 
 SInt8 CheckModDropClientService();
@@ -1075,3 +1100,23 @@ public:
 
 	std::vector<Entry>				result;
 };
+
+/*
+
+typedef UInt32(*_refenable)(TESObjectREFR * ref, bool unk1); // unk1 = 1
+RelocAddr <_refenable> refenable(0x0040D970);
+typedef UInt32(*_refdisable)(TESObjectREFR * ref, bool unk1); // unk1 = false
+RelocAddr <_refdisable> refdisable(0x004E4300);
+TESObjectREFR* ref = FindBestWeapons::GetCommandTarget();
+if (ref)
+{
+if ((ref->flags >> 11) & 1)
+{
+refenable(ref, true);
+}
+else
+{
+refenable(ref, false);
+}
+}
+*/
