@@ -1,6 +1,7 @@
 #pragma once
 
 #define CURRENT_RUNTIME_VERSION RUNTIME_VERSION_1_10_89
+#define SUPPORTED_RUNTIME_VERSION_STRING "1.10.89"
 
 #include "f4se/PluginAPI.h"
 #include "f4se/GameAPI.h"
@@ -16,6 +17,14 @@
 #include "GameMenus.h"
 #include "f4seee\f4seeeEvents.h"
 #include "f4se\GameRTTI.h"
+
+template <typename I> std::string n2hexstr(I w, size_t hex_len = sizeof(I) << 1) {
+	static const char* digits = "0123456789ABCDEF";
+	std::string rc(hex_len, '0');
+	for (size_t i = 0, j = (hex_len - 1) * 4; i<hex_len; ++i, j -= 4)
+		rc[i] = digits[(w >> j) & 0x0f];
+	return rc;
+}
 
 //#include "Globals.h"
 extern IDebugLog	gLog;

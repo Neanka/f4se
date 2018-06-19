@@ -369,42 +369,49 @@ void InitCWAddresses()
 {
 	MultiActivateMenuProcessMessage = RVA <_MultiActivateMenuProcessMessage>(
 		"MultiActivateMenuProcessMessage", {
+			{ RUNTIME_VERSION_1_10_89, 0x00B7B860 },
 			{ RUNTIME_VERSION_1_10_82, 0x00B7B800 },
 			{ RUNTIME_VERSION_1_10_75, 0x00B7B800 },
 			{ RUNTIME_VERSION_1_10_50, 0x0B7B420 },
 		}, "48 83 EC 28 44 8B 42 10 41 FF C8 41 83 F8 01");
 	g_multiActivateManager = RVA <MultiActivateManager*>(
 		"g_multiActivateManager", {
+			{ RUNTIME_VERSION_1_10_89, 0x05A9EB50 },
 			{ RUNTIME_VERSION_1_10_82, 0x05A9EB50 },
 			{ RUNTIME_VERSION_1_10_75, 0x05A9EB50 },
 			{ RUNTIME_VERSION_1_10_50, 0x05A9DB50 },
 		}, "48 8B 0D ? ? ? ? 48 8D 95 80 03 00 00", 0, 3, 7);
 	commandTargetCompanionRef = RVA <UInt32*>(
 		"commandTargetCompanionRef", {
+			{ RUNTIME_VERSION_1_10_89, 0x05A9909C },
 			{ RUNTIME_VERSION_1_10_82, 0x05A9909C },
 			{ RUNTIME_VERSION_1_10_75, 0x05A9909C },
 			{ RUNTIME_VERSION_1_10_50, 0x05A9909C },
 		}, "48 89 7C 24 38 48 C7 44 24 20 00 00 00 00 4C 89 74 24 30", -7, 3, 7);
 	CompanionListenerUnk03 = RVA <_CompanionListenerUnk03>(
 		"CompanionListenerUnk03", {
+			{ RUNTIME_VERSION_1_10_89, 0x009FFAC0 },
 			{ RUNTIME_VERSION_1_10_82, 0x009FFA60 },
 			{ RUNTIME_VERSION_1_10_75, 0x009FFA60 },
 			{ RUNTIME_VERSION_1_10_50, 0x09FFA60 },
 		}, "48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 50 8B FA");
 	EquipItem_int = RVA <_EquipItem_int>(
 		"EquipItem_int", {
+			{ RUNTIME_VERSION_1_10_89, 0x00E1BB70 },
 			{ RUNTIME_VERSION_1_10_82, 0x00E1BB10 },
 			{ RUNTIME_VERSION_1_10_75, 0x00E1BB10 },
 			{ RUNTIME_VERSION_1_10_50, 0x00E1B730 },
 		}, "4C 8B DC 49 89 53 10 55 56 41 54 41 57");
 	UnEquipItem_int = RVA <_UnEquipItem_int>(
 		"UnEquipItem_int", {
+			{ RUNTIME_VERSION_1_10_89, 0x00E1BF50 },
 			{ RUNTIME_VERSION_1_10_82, 0x00E1BEF0 },
 			{ RUNTIME_VERSION_1_10_75, 0x00E1BEF0 },
 			{ RUNTIME_VERSION_1_10_50, 0x00E1BB10 },
 		}, "48 8B C4 48 89 58 18 55 57 41 56 48 83 EC 70");
 	unk_itemManager = RVA <void*>(
 		"unk_itemManager", {
+			{ RUNTIME_VERSION_1_10_89, 0x05A10618 },
 			{ RUNTIME_VERSION_1_10_82, 0x05A0F618 },
 			{ RUNTIME_VERSION_1_10_75, 0x05A0F618 },
 			{ RUNTIME_VERSION_1_10_50, 0x05A0F618 },

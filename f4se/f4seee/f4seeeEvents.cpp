@@ -527,8 +527,125 @@ void TESSceneActionEvent_Dispatcher_Init()
 		}, GAME_VM_EVENTS_REG_SIG, FRAGMENT_EVENT_HANDLER_INDIRECTIONS(0x61));
 }
 
+// unk1
 
+RegistrationSetHolder<NullParameters>							g_f4seeeActorItemEquipped__EventRegs;
 
+f4seeeActorItemEquipped__EventSink g_f4seeeActorItemEquipped__EventSink;
+
+EventResult	f4seeeActorItemEquipped__EventSink::ReceiveEvent(ActorItemEquipped::Event * evn, void * dispatcher)
+{
+	_DMESSAGE("f4seee ActorItemEquipped__Event recieved: ");
+	DumpClass(evn, 20);
+
+	return kEvent_Continue;
+}
+
+RVA <BSTEventDispatcher<ActorItemEquipped::Event>*> ActorItemEquipped__Event_Dispatcher_address;
+
+void ActorItemEquipped__Event_Dispatcher_Init()
+{
+	ActorItemEquipped__Event_Dispatcher_address = RVA <BSTEventDispatcher<ActorItemEquipped::Event>*>(
+		"ActorItemEquipped__Event_Dispatcher_address", {
+			{ RUNTIME_VERSION_1_10_89, 0x00DC5DD0 },
+		}, "E8 ? ? ? ? 48 85 DB 74 ? 48 8D 8B C0 00 00 00", { { 0, 1, 5 },{ 0x9,1,5 } });
+}
+
+// inv1 InventoryEventHandler@GameScript@@ 0h 
+
+RegistrationSetHolder<NullParameters>							g_f4seeeHolotapeChatterEventRegs;
+
+f4seeeHolotapeChatterEventSink g_f4seeeHolotapeChatterEventSink;
+
+EventResult	f4seeeHolotapeChatterEventSink::ReceiveEvent(HolotapeChatterEvent * evn, void * dispatcher)
+{
+	_DMESSAGE("f4seee HolotapeChatterEvent recieved:");
+	DumpClass(evn, 20);
+
+	return kEvent_Continue;
+}
+
+RVA <BSTEventDispatcher<HolotapeChatterEvent>*> HolotapeChatterEvent_Dispatcher_address;
+
+void HolotapeChatterEvent_Dispatcher_Init()
+{
+	HolotapeChatterEvent_Dispatcher_address = RVA <BSTEventDispatcher<HolotapeChatterEvent>*>(
+		"HolotapeChatterEvent_Dispatcher_address", {
+			{ RUNTIME_VERSION_1_10_89, 0x00441A30 },
+		}, InventoryEventHandler_EVENTS_REG_SIG, InventoryEventHandler_INDIRECTIONS(0x36));
+}
+
+// inv2 InventoryEventHandler@GameScript@@ 8h 
+
+RegistrationSetHolder<NullParameters>							g_f4seeeHolotapePlayEventRegs;
+
+f4seeeHolotapePlayEventSink g_f4seeeHolotapePlayEventSink;
+
+EventResult	f4seeeHolotapePlayEventSink::ReceiveEvent(HolotapePlayEvent * evn, void * dispatcher)
+{
+	_DMESSAGE("f4seee HolotapePlayEvent recieved:");
+	DumpClass(evn, 20);
+
+	return kEvent_Continue;
+}
+
+RVA <BSTEventDispatcher<HolotapePlayEvent>*> HolotapePlayEvent_Dispatcher_address;
+
+void HolotapePlayEvent_Dispatcher_Init()
+{
+	HolotapePlayEvent_Dispatcher_address = RVA <BSTEventDispatcher<HolotapePlayEvent>*>(
+		"HolotapePlayEvent_Dispatcher_address", {
+			{ RUNTIME_VERSION_1_10_89, 0x00441AD0 },
+		}, InventoryEventHandler_EVENTS_REG_SIG, InventoryEventHandler_INDIRECTIONS(0x51));
+}
+
+// inv3 InventoryEventHandler@GameScript@@ 10h 
+
+RegistrationSetHolder<NullParameters>							g_f4seeeTESContainerChangedEventRegs;
+
+f4seeeTESContainerChangedEventSink g_f4seeeTESContainerChangedEventSink;
+
+EventResult	f4seeeTESContainerChangedEventSink::ReceiveEvent(TESContainerChangedEvent * evn, void * dispatcher)
+{
+	_DMESSAGE("f4seee TESContainerChangedEvent recieved:");
+	DumpClass(evn, 20);
+
+	return kEvent_Continue;
+}
+
+RVA <BSTEventDispatcher<TESContainerChangedEvent>*> TESContainerChangedEvent_Dispatcher_address;
+
+void TESContainerChangedEvent_Dispatcher_Init()
+{
+	TESContainerChangedEvent_Dispatcher_address = RVA <BSTEventDispatcher<TESContainerChangedEvent>*>(
+		"TESContainerChangedEvent_Dispatcher_address", {
+			{ RUNTIME_VERSION_1_10_89, 0x00442390 },
+		}, InventoryEventHandler_EVENTS_REG_SIG, InventoryEventHandler_INDIRECTIONS(0x1D));
+}
+
+// inv4 InventoryEventHandler@GameScript@@ 18h 
+
+RegistrationSetHolder<NullParameters>							g_f4seeeTESEquipEventRegs;
+
+f4seeeTESEquipEventSink g_f4seeeTESEquipEventSink;
+
+EventResult	f4seeeTESEquipEventSink::ReceiveEvent(TESEquipEvent * evn, void * dispatcher)
+{
+	_DMESSAGE("f4seee TESEquipEvent recieved:");
+	DumpClass(evn, 20);
+
+	return kEvent_Continue;
+}
+
+RVA <BSTEventDispatcher<TESEquipEvent>*> TESEquipEvent_Dispatcher_address;
+
+void TESEquipEvent_Dispatcher_Init()
+{
+	TESEquipEvent_Dispatcher_address = RVA <BSTEventDispatcher<TESEquipEvent>*>(
+		"TESEquipEvent_Dispatcher_address", {
+			{ RUNTIME_VERSION_1_10_89, 0x00442750 },
+		}, InventoryEventHandler_EVENTS_REG_SIG, InventoryEventHandler_INDIRECTIONS(0x2E));
+}
 
 
 
@@ -558,4 +675,13 @@ void InitEvents()
 	TESPerkEntryRunEvent_Dispatcher_Init();					// x7
 	TESQuestStageEvent_Dispatcher_Init();					// x8
 	TESSceneActionEvent_Dispatcher_Init();					// x9
+
+	ActorItemEquipped__Event_Dispatcher_Init();				//unk1
+
+	HolotapeChatterEvent_Dispatcher_Init();					// inv1
+	HolotapePlayEvent_Dispatcher_Init();					// inv2
+	TESContainerChangedEvent_Dispatcher_Init();				// inv3
+	TESEquipEvent_Dispatcher_Init();						// inv4
+
+
 }

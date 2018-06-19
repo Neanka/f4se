@@ -146,6 +146,9 @@ template<> inline BSTEventDispatcher<Event> * GetEventDispatcher() \
 
 #define GAME_VM_EVENTS_REG_SIG "E8 ? ? ? ? 49 8B 0F 49 8D 56 10"
 
+#define InventoryEventHandler_EVENTS_REG_SIG "48 89 5C 24 08 57 48 83 EC 20 33 FF 48 8B D9 48 85 C9 74 ? 48 83 C1 10 EB ?"
+#define InventoryEventHandler_INDIRECTIONS(_offset) { { _offset,1,5 },{ 0x9,1,5 } }
+
 #define BASIC_EVENT_HANDLER_INDIRECTIONS(_offset) { {0,1,5},{0x14,1,5},{ _offset,1,5 },{ 0x9,1,5 } }
 #define BASIC_EVENT_HANDLER_INDIRECTIONS1(_offset) { {0,1,5},{0x14,1,5},{ _offset,1,5 },{ 0x35,1,5 } }
 
@@ -808,7 +811,128 @@ public:
 
 extern f4seeeTESSceneActionEventSink g_f4seeeTESSceneActionEventSink;
 
+// unk1
+struct ActorItemEquipped
+{
+	struct Event
+	{
 
+	};
+};
+
+extern RVA <BSTEventDispatcher<ActorItemEquipped::Event>*> ActorItemEquipped__Event_Dispatcher_address;
+
+void ActorItemEquipped__Event_Dispatcher_Init();
+
+DECLARE_EVENT_DISPATCHER_EX(ActorItemEquipped::Event, ActorItemEquipped__Event_Dispatcher_address);
+
+extern RegistrationSetHolder<NullParameters>							g_f4seeeActorItemEquipped__EventRegs;
+
+class f4seeeActorItemEquipped__EventSink : public BSTEventSink<ActorItemEquipped::Event>
+{
+public:
+	virtual	EventResult	ReceiveEvent(ActorItemEquipped::Event * evn, void * dispatcher) override;
+};
+
+extern f4seeeActorItemEquipped__EventSink g_f4seeeActorItemEquipped__EventSink;
+
+// inv1 InventoryEventHandler@GameScript@@ 0h 
+struct HolotapeChatterEvent
+{
+
+};
+
+extern RVA <BSTEventDispatcher<HolotapeChatterEvent>*> HolotapeChatterEvent_Dispatcher_address;
+
+void HolotapeChatterEvent_Dispatcher_Init();
+
+DECLARE_EVENT_DISPATCHER_EX(HolotapeChatterEvent, HolotapeChatterEvent_Dispatcher_address);
+
+extern RegistrationSetHolder<NullParameters>							g_f4seeeHolotapeChatterEventRegs;
+
+class f4seeeHolotapeChatterEventSink : public BSTEventSink<HolotapeChatterEvent>
+{
+public:
+	virtual	EventResult	ReceiveEvent(HolotapeChatterEvent * evn, void * dispatcher) override;
+};
+
+extern f4seeeHolotapeChatterEventSink g_f4seeeHolotapeChatterEventSink;
+
+// inv2 InventoryEventHandler@GameScript@@ 8h 
+struct HolotapePlayEvent
+{
+
+};
+
+extern RVA <BSTEventDispatcher<HolotapePlayEvent>*> HolotapePlayEvent_Dispatcher_address;
+
+void HolotapePlayEvent_Dispatcher_Init();
+
+DECLARE_EVENT_DISPATCHER_EX(HolotapePlayEvent, HolotapePlayEvent_Dispatcher_address);
+
+extern RegistrationSetHolder<NullParameters>							g_f4seeeHolotapePlayEventRegs;
+
+class f4seeeHolotapePlayEventSink : public BSTEventSink<HolotapePlayEvent>
+{
+public:
+	virtual	EventResult	ReceiveEvent(HolotapePlayEvent * evn, void * dispatcher) override;
+};
+
+extern f4seeeHolotapePlayEventSink g_f4seeeHolotapePlayEventSink;
+
+// inv3 InventoryEventHandler@GameScript@@ 10h 
+struct TESContainerChangedEvent
+{
+	UInt32          sourceContainerFormID;              // 00
+	UInt32          targetContainerFormID;                // 04
+	UInt32          itemFormID;                            // 08
+	UInt32          count;                                // 0C
+														  //... etc
+};
+
+extern RVA <BSTEventDispatcher<TESContainerChangedEvent>*> TESContainerChangedEvent_Dispatcher_address;
+
+void TESContainerChangedEvent_Dispatcher_Init();
+
+DECLARE_EVENT_DISPATCHER_EX(TESContainerChangedEvent, TESContainerChangedEvent_Dispatcher_address);
+
+extern RegistrationSetHolder<NullParameters>							g_f4seeeTESContainerChangedEventRegs;
+
+class f4seeeTESContainerChangedEventSink : public BSTEventSink<TESContainerChangedEvent>
+{
+public:
+	virtual	EventResult	ReceiveEvent(TESContainerChangedEvent * evn, void * dispatcher) override;
+};
+
+extern f4seeeTESContainerChangedEventSink g_f4seeeTESContainerChangedEventSink;
+
+// inv4 InventoryEventHandler@GameScript@@ 18h 
+struct TESEquipEvent
+{
+	Actor*				ref;			// 00
+	UInt32				baseFormID;		// 08
+	UInt32				unk0C;			// 0C
+	UInt8				unk10;			// 10
+	UInt8				unk11;			// 11
+	UInt8				status;			// 12	1-equipped, 0-unequipped
+	//etc...
+};
+
+extern RVA <BSTEventDispatcher<TESEquipEvent>*> TESEquipEvent_Dispatcher_address;
+
+void TESEquipEvent_Dispatcher_Init();
+
+DECLARE_EVENT_DISPATCHER_EX(TESEquipEvent, TESEquipEvent_Dispatcher_address);
+
+extern RegistrationSetHolder<NullParameters>							g_f4seeeTESEquipEventRegs;
+
+class f4seeeTESEquipEventSink : public BSTEventSink<TESEquipEvent>
+{
+public:
+	virtual	EventResult	ReceiveEvent(TESEquipEvent * evn, void * dispatcher) override;
+};
+
+extern f4seeeTESEquipEventSink g_f4seeeTESEquipEventSink;
 
 
 
