@@ -49,7 +49,7 @@ void ContainerMenuInvoke_Hook(ContainerMenu * menu, GFxFunctionHandler::Args * a
 					if (form->formType == kFormType_WEAP)
 					{
 						TESObjectWEAP* weap = (TESObjectWEAP*)form;
-						float APCost = 0;
+						float APCost = weap->weapData.actionCost;
 						ExtraDataList * stackDataList = currentStack->extraData;
 						if (stackDataList) {
 							ExtraInstanceData * eid = DYNAMIC_CAST(stackDataList->GetByType(kExtraData_InstanceData), BSExtraData, ExtraInstanceData);
@@ -57,17 +57,13 @@ void ContainerMenuInvoke_Hook(ContainerMenu * menu, GFxFunctionHandler::Args * a
 							{
 								APCost = ((TESObjectWEAP::InstanceData*)eid->instanceData)->actionCost;
 							}
-							else
-							{
-								APCost = weap->weapData.actionCost;
-							}
-							GFxValue extraData;
-							root->CreateObject(&extraData);
-							RegisterString(&extraData, root, "text", "APCost");
-							RegisterString(&extraData, root, "value", std::to_string(int(round(APCost))).c_str());
-							RegisterInt(&extraData, "difference", 0);
-							playerListArrayItemCardInfoList.PushBack(&extraData);
 						}
+						GFxValue extraData;
+						root->CreateObject(&extraData);
+						RegisterString(&extraData, root, "text", "APCost");
+						RegisterString(&extraData, root, "value", std::to_string(int(round(APCost))).c_str());
+						RegisterInt(&extraData, "difference", 0);
+						playerListArrayItemCardInfoList.PushBack(&extraData);
 					}
 				}
 
@@ -102,7 +98,7 @@ void ContainerMenuInvoke_Hook(ContainerMenu * menu, GFxFunctionHandler::Args * a
 					if (form->formType == kFormType_WEAP)
 					{
 						TESObjectWEAP* weap = (TESObjectWEAP*)form;
-						float APCost = 0;
+						float APCost = weap->weapData.actionCost;
 						ExtraDataList * stackDataList = currentStack->extraData;
 						if (stackDataList) {
 							ExtraInstanceData * eid = DYNAMIC_CAST(stackDataList->GetByType(kExtraData_InstanceData), BSExtraData, ExtraInstanceData);
@@ -110,17 +106,13 @@ void ContainerMenuInvoke_Hook(ContainerMenu * menu, GFxFunctionHandler::Args * a
 							{
 								APCost = ((TESObjectWEAP::InstanceData*)eid->instanceData)->actionCost;
 							}
-							else
-							{
-								APCost = weap->weapData.actionCost;
-							}
-							GFxValue extraData;
-							root->CreateObject(&extraData);
-							RegisterString(&extraData, root, "text", "APCost");
-							RegisterString(&extraData, root, "value", std::to_string(int(round(APCost))).c_str());
-							RegisterInt(&extraData, "difference", 0);
-							containerListArrayItemCardInfoList.PushBack(&extraData);
 						}
+						GFxValue extraData;
+						root->CreateObject(&extraData);
+						RegisterString(&extraData, root, "text", "APCost");
+						RegisterString(&extraData, root, "value", std::to_string(int(round(APCost))).c_str());
+						RegisterInt(&extraData, "difference", 0);
+						containerListArrayItemCardInfoList.PushBack(&extraData);
 					}
 				}
 
