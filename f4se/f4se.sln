@@ -41,6 +41,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "f4mcm", "..\..\f4mcm\src\f4
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ESH", "ESH\ESH.vcxproj", "{8EFB3878-11CB-40EE-87E5-35DCC49F2C0F}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test", "test\test.vcxproj", "{54027C51-55ED-4E44-8FCA-02C92E19D612}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug_VC14|x64 = Debug_VC14|x64
@@ -329,6 +331,20 @@ Global
 		{8EFB3878-11CB-40EE-87E5-35DCC49F2C0F}.Release|x64.ActiveCfg = Release|x64
 		{8EFB3878-11CB-40EE-87E5-35DCC49F2C0F}.Release|x64.Build.0 = Release|x64
 		{8EFB3878-11CB-40EE-87E5-35DCC49F2C0F}.Release|x86.ActiveCfg = Release|x64
+		{54027C51-55ED-4E44-8FCA-02C92E19D612}.Debug_VC14|x64.ActiveCfg = Debug|x64
+		{54027C51-55ED-4E44-8FCA-02C92E19D612}.Debug_VC14|x64.Build.0 = Debug|x64
+		{54027C51-55ED-4E44-8FCA-02C92E19D612}.Debug_VC14|x86.ActiveCfg = Debug|x64
+		{54027C51-55ED-4E44-8FCA-02C92E19D612}.Debug_VC14|x86.Build.0 = Debug|x64
+		{54027C51-55ED-4E44-8FCA-02C92E19D612}.Debug|x64.ActiveCfg = Debug|x64
+		{54027C51-55ED-4E44-8FCA-02C92E19D612}.Debug|x64.Build.0 = Debug|x64
+		{54027C51-55ED-4E44-8FCA-02C92E19D612}.Debug|x86.ActiveCfg = Debug|x64
+		{54027C51-55ED-4E44-8FCA-02C92E19D612}.Release_VC14|x64.ActiveCfg = Release|x64
+		{54027C51-55ED-4E44-8FCA-02C92E19D612}.Release_VC14|x64.Build.0 = Release|x64
+		{54027C51-55ED-4E44-8FCA-02C92E19D612}.Release_VC14|x86.ActiveCfg = Debug|x64
+		{54027C51-55ED-4E44-8FCA-02C92E19D612}.Release_VC14|x86.Build.0 = Debug|x64
+		{54027C51-55ED-4E44-8FCA-02C92E19D612}.Release|x64.ActiveCfg = Release|x64
+		{54027C51-55ED-4E44-8FCA-02C92E19D612}.Release|x64.Build.0 = Release|x64
+		{54027C51-55ED-4E44-8FCA-02C92E19D612}.Release|x86.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

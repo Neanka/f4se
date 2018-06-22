@@ -720,7 +720,7 @@ void tracePipboyObj(PipboyObject* obj)
 };
 
 
-RelocPtr <void*> qword_14590DA00(0x0590DA00);
+RelocPtr <void*> g_itemMenuDataMgr(0x0590DA00);
 RelocAddr <_getInventoryItemByHandleID> getInventoryItemByHandleID(0x001A3650);
 
 BGSInventoryItem* getInventoryItemByIndex(UInt32 index)
@@ -732,7 +732,7 @@ BGSInventoryItem* getInventoryItemByIndex(UInt32 index)
 		UInt32 val = ((PipboyPrimitiveValue<UInt32>*)(ti->value))->value;
 		_MESSAGE("handleID: %u", val);
 
-		BGSInventoryItem* bg = getInventoryItemByHandleID(*qword_14590DA00, &val);
+		BGSInventoryItem* bg = getInventoryItemByHandleID(*g_itemMenuDataMgr, &val);
 		if (bg)
 		{
 			return bg;
@@ -746,6 +746,19 @@ BGSInventoryItem* getInventoryItemByIndex(UInt32 index)
 	return nullptr;
 }
 
+BGSInventoryItem* getInventoryItemByHandleID_int(UInt32 handleID)
+{
+	BGSInventoryItem* bg = getInventoryItemByHandleID(*g_itemMenuDataMgr, &handleID);
+	if (bg)
+	{
+		return bg;
+	}
+	else
+	{
+		return nullptr;
+	}
+
+}
 
 uintptr_t HasPerkVisitor::Accept(Entry* pEntry) //bool, don't use bool,VS2015 compiler seems has a bug.
 {

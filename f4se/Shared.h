@@ -684,6 +684,7 @@ public:
 STATIC_ASSERT(offsetof(PipboyObject, table) == 0x18);
 */
 
+
 class PipboyArray : public PipboyValue
 {
 public:
@@ -715,13 +716,13 @@ void tracePipboyArray(PipboyArray* arr);
 void tracePipboyObj(PipboyObject* obj);
 void tracePipboyValue(PipboyValue* pv);
 
-
-extern RelocPtr <void*> qword_14590DA00;
+extern RelocPtr <void*> g_itemMenuDataMgr;
 
 typedef BGSInventoryItem*(*_getInventoryItemByHandleID)(void* param1, UInt32* handleid);
 extern RelocAddr <_getInventoryItemByHandleID> getInventoryItemByHandleID;
 
 BGSInventoryItem* getInventoryItemByIndex(UInt32 index);
+BGSInventoryItem* getInventoryItemByHandleID_int(UInt32 handleID);
 
 /*
 class PipboyInventoryMenu;
@@ -839,8 +840,16 @@ struct InvInterfaceStateChangeEvent
 
 struct unkstr
 {
-	void* unk00;
+	UInt32 HandleID;
+	UInt32 pad0c;
+	UInt32 unk08;
+	UInt32 unk0c;
+	UInt16 stackid; // ?
+	UInt16 pad12[3];
+	UInt32 unk18;
+	UInt32 unk1c;
 };
+STATIC_ASSERT(sizeof(unkstr) == 0x20);
 
 class ContainerMenuBase : public GameMenuBase
 {
