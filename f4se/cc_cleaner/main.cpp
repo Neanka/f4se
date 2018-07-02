@@ -114,8 +114,8 @@ extern "C"
 
 		// Check game version
 		if (f4se->runtimeVersion != CURRENT_RUNTIME_VERSION) {
-			_WARNING("WARNING: Unsupported runtime version %08X. This DLL is built for v1.10.89 only.", f4se->runtimeVersion);
-			MessageBox(NULL, "Unsupported runtime version (expected v1.10.89). \ncc_cleaner will be disabled.", "cc_cleaner", MB_OK | MB_ICONEXCLAMATION);
+			_WARNING("WARNING: Unsupported runtime version %08X. This DLL is built for v1.10.98 only.", f4se->runtimeVersion);
+			MessageBox(NULL, "Unsupported runtime version (expected v1.10.98). \ncc_cleaner will be disabled.", "cc_cleaner", MB_OK | MB_ICONEXCLAMATION);
 			return false;
 		}
 

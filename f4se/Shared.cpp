@@ -161,6 +161,7 @@ void InitExeAddress()
 {
 	ExecuteCommand = RVA <_ExecuteCommand>(
 		"ExecuteCommand", {
+			{ RUNTIME_VERSION_1_10_98, 0x0125B380 },
 			{ RUNTIME_VERSION_1_10_89, 0x0125B340 },
 			{ RUNTIME_VERSION_1_10_82, 0x0125B2E0 },
 			{ RUNTIME_VERSION_1_10_75, 0x0125B2E0 },
@@ -177,6 +178,7 @@ void InitTIMAddress()
 {
 	SetPlayerName_int = RVA <_SetPlayerName>(
 		"SetPlayerName_int", {
+			{ RUNTIME_VERSION_1_10_98, 0x00BB9040 },
 			{ RUNTIME_VERSION_1_10_89, 0x00BB9000 },
 			{ RUNTIME_VERSION_1_10_82, 0x00BB8FA0 },
 			{ RUNTIME_VERSION_1_10_75, 0x00BB8FA0 },
@@ -192,6 +194,7 @@ void InitAddresses()
 {
 	HasPerk = RVA <_HasPerk>(
 		"HasPerk", {
+			{ RUNTIME_VERSION_1_10_98, 0x00DA64E0 },
 			{ RUNTIME_VERSION_1_10_89, 0x00DA64A0 },
 			{ RUNTIME_VERSION_1_10_82, 0x00DA6440 },
 			{ RUNTIME_VERSION_1_10_75, 0x00DA6440 },
@@ -204,6 +207,7 @@ void InitAddresses()
 		}, "48 83 EC 28 48 8B 81 00 03 00 00 48 85 C0 74 ? 4C 8B C2");
 	AddPerk = RVA <_AddPerk>(
 		"AddPerk", {
+			{ RUNTIME_VERSION_1_10_98, 0x00DA60E0 },
 			{ RUNTIME_VERSION_1_10_89, 0x00DA60A0 },
 			{ RUNTIME_VERSION_1_10_82, 0x00DA6040 },
 			{ RUNTIME_VERSION_1_10_75, 0x00DA6040 },
@@ -216,6 +220,7 @@ void InitAddresses()
 		}, "48 89 5C 24 08 48 89 6C 24 10 56 57 41 56 48 83 EC 40 48 8D 99 34 04 00 00");
 	GetLevel = RVA <_GetLevel>(
 		"GetLevel", {
+			{ RUNTIME_VERSION_1_10_98, 0x00D79D70 },
 			{ RUNTIME_VERSION_1_10_89, 0x00D79D30 },
 			{ RUNTIME_VERSION_1_10_82, 0x00D79CD0 },
 			{ RUNTIME_VERSION_1_10_75, 0x00D79CD0 },
@@ -228,6 +233,7 @@ void InitAddresses()
 		}, "48 8B 89 E0 00 00 00 48 83 C1 68 E9 ? ? ? ?");
 	GetItemCount = RVA <_GetItemCount>(
 		"GetItemCount", {
+			{ RUNTIME_VERSION_1_10_98, 0x013FB5E0 },
 			{ RUNTIME_VERSION_1_10_89, 0x013FB5A0 },
 			{ RUNTIME_VERSION_1_10_82, 0x013FB540 },
 			{ RUNTIME_VERSION_1_10_75, 0x013FB540 },
@@ -240,6 +246,7 @@ void InitAddresses()
 		}, "48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57 48 83 EC 40 49 8B F9 41 0F B6 E8");
 	g_main = RVA <uintptr_t>(
 		"g_main", {
+			{ RUNTIME_VERSION_1_10_98, 0x05ADD2C8 },
 			{ RUNTIME_VERSION_1_10_89, 0x05ADD2C8 },
 			{ RUNTIME_VERSION_1_10_82, 0x05ADD2C8 },
 			{ RUNTIME_VERSION_1_10_75, 0x05ADD2C8 },
@@ -259,6 +266,7 @@ void InitAddresses()
 	}, "48 8B 15 ? ? ? ? 48 8D 0D ? ? ? ? 48 83 C2 10", 0, 3, 7);*/ // added in 1 10 75 into f4se
 	GetRandomPercent = RVA <_GetRandomPercent>(
 		"GetRandomPercent", {
+			{ RUNTIME_VERSION_1_10_98, 0x01B12B60 },
 			{ RUNTIME_VERSION_1_10_89, 0x01B12B20 },
 			{ RUNTIME_VERSION_1_10_82, 0x01B12AC0 },
 			{ RUNTIME_VERSION_1_10_75, 0x01B12AC0 },
@@ -268,6 +276,7 @@ void InitAddresses()
 		}, "40 53 48 83 EC 20 8B D9 83 F9 01");
 	GetRandomPercent2 = RVA <_GetRandomPercent2>(
 		"GetRandomPercent2", {
+			{ RUNTIME_VERSION_1_10_98, 0x01B12C00 },
 			{ RUNTIME_VERSION_1_10_89, 0x01B12BC0 },
 			{ RUNTIME_VERSION_1_10_82, 0x01B12B60 },
 			{ RUNTIME_VERSION_1_10_75, 0x01B12B60 },
@@ -277,6 +286,7 @@ void InitAddresses()
 		}, "48 89 5C 24 08 57 48 83 EC 20 8B DA 8B F9");
 	SetPerkPoints_int = RVA <_SetPerkPoints_int>(
 		"SetPerkPoints_int", {
+			{ RUNTIME_VERSION_1_10_98, 0x00EB8A80 },
 			{ RUNTIME_VERSION_1_10_89, 0x00EB8A40 },
 			{ RUNTIME_VERSION_1_10_82, 0x00EB89E0 },
 			{ RUNTIME_VERSION_1_10_75, 0x00EB89E0 },
@@ -285,6 +295,7 @@ void InitAddresses()
 		}, "48 83 EC 28 88 91 F1 0C 00 00");
 	PlaySound_int = RVA <_PlaySound>(
 		"PlaySound_int", {
+			{ RUNTIME_VERSION_1_10_98, 0x012BE190 },
 			{ RUNTIME_VERSION_1_10_89, 0x012BE150 },
 			{ RUNTIME_VERSION_1_10_82, 0x012BE0F0 },
 			{ RUNTIME_VERSION_1_10_75, 0x012BE0F0 },
@@ -293,6 +304,7 @@ void InitAddresses()
 		}, "48 83 EC 38 E8 ? ? ? ? 48 85 C0 74 ? 48 89 5C 24 30");
 	PlaySound2_int = RVA <_PlaySound2>(
 		"PlaySound2_int", {
+			{ RUNTIME_VERSION_1_10_98, 0x012BE200 },
 			{ RUNTIME_VERSION_1_10_89, 0x012BE1C0 },
 			{ RUNTIME_VERSION_1_10_82, 0x012BE160 },
 			{ RUNTIME_VERSION_1_10_75, 0x012BE160 },
@@ -301,6 +313,7 @@ void InitAddresses()
 		}, "48 89 5C 24 08 57 48 83 EC 50 48 8B D9 E8 ? ? ? ?");
 	LevelupMenuProcessMessage = RVA <_LevelupMenuProcessMessage>(
 		"LevelupMenuProcessMessage", {
+			{ RUNTIME_VERSION_1_10_98, 0x00B383C0 },
 			{ RUNTIME_VERSION_1_10_89, 0x00B383C0 },
 			{ RUNTIME_VERSION_1_10_82, 0x00B38360 },
 			{ RUNTIME_VERSION_1_10_75, 0x00B38360 },
@@ -309,6 +322,7 @@ void InitAddresses()
 		}, "48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 40 48 8B F1 8B 4A 10");
 	LevelupMenuPlayPerkSound = RVA <_LevelupMenuPlayPerkSound>(
 		"LevelupMenuPlayPerkSound", {
+			{ RUNTIME_VERSION_1_10_98, 0x00B397B0 },
 			{ RUNTIME_VERSION_1_10_89, 0x00B397B0 },
 			{ RUNTIME_VERSION_1_10_82, 0x00B39750 },
 			{ RUNTIME_VERSION_1_10_75, 0x00B39750 },
@@ -317,6 +331,7 @@ void InitAddresses()
 		}, "48 89 5C 24 08 57 48 83 EC 30 48 8B F9 8B CA 33 DB E8 ? ? ? ? 48 85 C0 74 ? 80 78 1A 5F 75 ? 48 8B 98 88 00 00 00 48 81 C7 80 01 00 00");
 	LevelupMenuStopPerkSound = RVA <_LevelupMenuStopPerkSound>(
 		"LevelupMenuStopPerkSound", {
+			{ RUNTIME_VERSION_1_10_98, 0x01AC7FF0 },
 			{ RUNTIME_VERSION_1_10_89, 0x01AC7FB0 },
 			{ RUNTIME_VERSION_1_10_82, 0x01AC7F50 },
 			{ RUNTIME_VERSION_1_10_75, 0x01AC7F50 },
@@ -325,6 +340,7 @@ void InitAddresses()
 		}, "40 53 48 83 EC 20 8B 19 83 FB FF 74 ? C6 41 05 02");
 	g_PipboyDataManager = RVA <PipboyDataManager*>(
 		"g_PipboyDataManager", {
+			{ RUNTIME_VERSION_1_10_98, 0x05909B70 },
 			{ RUNTIME_VERSION_1_10_89, 0x05909B70 },
 			{ RUNTIME_VERSION_1_10_82, 0x05909B70 },
 			{ RUNTIME_VERSION_1_10_75, 0x05909B70 },
@@ -341,6 +357,7 @@ void InitUIManager()
 {
 	UI_AddMessage = RVA <_UI_AddMessage>(
 		"UI_AddMessage", {
+			{ RUNTIME_VERSION_1_10_98, 0x0204CA70 },
 			{ RUNTIME_VERSION_1_10_89, 0x0204CA30 },
 			{ RUNTIME_VERSION_1_10_82, 0x0204C9D0 },
 			{ RUNTIME_VERSION_1_10_75, 0x0204C960 },
@@ -353,15 +370,16 @@ void InitUIManager()
 		}, "48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 48 89 7C 24 20 41 54 41 56 41 57 48 83 EC 20 44 8B 0D ? ? ? ? 65 48 8B 04 25 58 00 00 00 48 8B E9 4A 8B 34 C8 B9 C0 09 00 00");
 	g_UIManager = RVA <void*>(
 		"g_UIManager", {
+			{ RUNTIME_VERSION_1_10_98, 0x05909B48 },
 			{ RUNTIME_VERSION_1_10_89, 0x05909B48 },
 			{ RUNTIME_VERSION_1_10_82, 0x05909B48 },
 			{ RUNTIME_VERSION_1_10_75, 0x05909B48 },
-		{ RUNTIME_VERSION_1_10_64, 0x05909B48 },
-		{ RUNTIME_VERSION_1_10_50, 0x05908B48 },
-		{ RUNTIME_VERSION_1_10_40, 0x0590AB48 },
-		{ RUNTIME_VERSION_1_10_26, 0x58EEEC8 },
-		{ RUNTIME_VERSION_1_10_20, 0x58EEEC8 },
-		{ RUNTIME_VERSION_1_9_4,   0x585BD48 },
+			{ RUNTIME_VERSION_1_10_64, 0x05909B48 },
+			{ RUNTIME_VERSION_1_10_50, 0x05908B48 },
+			{ RUNTIME_VERSION_1_10_40, 0x0590AB48 },
+			{ RUNTIME_VERSION_1_10_26, 0x58EEEC8 },
+			{ RUNTIME_VERSION_1_10_20, 0x58EEEC8 },
+			{ RUNTIME_VERSION_1_9_4,   0x585BD48 },
 		}, "48 8B 3D ? ? ? ? E8 ? ? ? ? 41 B8 01 00 00 00 48 8B CF 48 8B D0", 0, 3, 7);
 }
 
@@ -369,6 +387,7 @@ void InitCWAddresses()
 {
 	MultiActivateMenuProcessMessage = RVA <_MultiActivateMenuProcessMessage>(
 		"MultiActivateMenuProcessMessage", {
+			{ RUNTIME_VERSION_1_10_98, 0x00B7B8A0 },
 			{ RUNTIME_VERSION_1_10_89, 0x00B7B860 },
 			{ RUNTIME_VERSION_1_10_82, 0x00B7B800 },
 			{ RUNTIME_VERSION_1_10_75, 0x00B7B800 },
@@ -376,6 +395,7 @@ void InitCWAddresses()
 		}, "48 83 EC 28 44 8B 42 10 41 FF C8 41 83 F8 01");
 	g_multiActivateManager = RVA <MultiActivateManager*>(
 		"g_multiActivateManager", {
+			{ RUNTIME_VERSION_1_10_98, 0x05A9EB50 },
 			{ RUNTIME_VERSION_1_10_89, 0x05A9EB50 },
 			{ RUNTIME_VERSION_1_10_82, 0x05A9EB50 },
 			{ RUNTIME_VERSION_1_10_75, 0x05A9EB50 },
@@ -383,6 +403,7 @@ void InitCWAddresses()
 		}, "48 8B 0D ? ? ? ? 48 8D 95 80 03 00 00", 0, 3, 7);
 	commandTargetCompanionRef = RVA <UInt32*>(
 		"commandTargetCompanionRef", {
+			{ RUNTIME_VERSION_1_10_98, 0x05A9909C },
 			{ RUNTIME_VERSION_1_10_89, 0x05A9909C },
 			{ RUNTIME_VERSION_1_10_82, 0x05A9909C },
 			{ RUNTIME_VERSION_1_10_75, 0x05A9909C },
@@ -390,6 +411,7 @@ void InitCWAddresses()
 		}, "48 89 7C 24 38 48 C7 44 24 20 00 00 00 00 4C 89 74 24 30", -7, 3, 7);
 	CompanionListenerUnk03 = RVA <_CompanionListenerUnk03>(
 		"CompanionListenerUnk03", {
+			{ RUNTIME_VERSION_1_10_98, 0x009FFAC0 },
 			{ RUNTIME_VERSION_1_10_89, 0x009FFAC0 },
 			{ RUNTIME_VERSION_1_10_82, 0x009FFA60 },
 			{ RUNTIME_VERSION_1_10_75, 0x009FFA60 },
@@ -397,6 +419,7 @@ void InitCWAddresses()
 		}, "48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 50 8B FA");
 	EquipItem_int = RVA <_EquipItem_int>(
 		"EquipItem_int", {
+			{ RUNTIME_VERSION_1_10_98, 0x00E1BBB0 },
 			{ RUNTIME_VERSION_1_10_89, 0x00E1BB70 },
 			{ RUNTIME_VERSION_1_10_82, 0x00E1BB10 },
 			{ RUNTIME_VERSION_1_10_75, 0x00E1BB10 },
@@ -404,6 +427,7 @@ void InitCWAddresses()
 		}, "4C 8B DC 49 89 53 10 55 56 41 54 41 57");
 	UnEquipItem_int = RVA <_UnEquipItem_int>(
 		"UnEquipItem_int", {
+			{ RUNTIME_VERSION_1_10_98, 0x00E1BF90 },
 			{ RUNTIME_VERSION_1_10_89, 0x00E1BF50 },
 			{ RUNTIME_VERSION_1_10_82, 0x00E1BEF0 },
 			{ RUNTIME_VERSION_1_10_75, 0x00E1BEF0 },
@@ -411,6 +435,7 @@ void InitCWAddresses()
 		}, "48 8B C4 48 89 58 18 55 57 41 56 48 83 EC 70");
 	unk_itemManager = RVA <void*>(
 		"unk_itemManager", {
+			{ RUNTIME_VERSION_1_10_98, 0x05A10618 },
 			{ RUNTIME_VERSION_1_10_89, 0x05A10618 },
 			{ RUNTIME_VERSION_1_10_82, 0x05A0F618 },
 			{ RUNTIME_VERSION_1_10_75, 0x05A0F618 },
@@ -668,25 +693,25 @@ void tracePipboyValue(PipboyValue* pv)
 	UInt64 vtbladdress = *reinterpret_cast<UInt64*>((uintptr_t)pv) - RelocationManager::s_baseAddr;
 	switch (vtbladdress)
 	{
-	case 0x2D545C0:	// BSFixedStringCS
+	case 0x2D545B0:	// BSFixedStringCS
 		tracePipboyPrimitiveValueBSFixedStringCS((PipboyPrimitiveValue<BSFixedString>*)pv);
 		break;
-	case 0x2D54668:	// uint
+	case 0x2D54658:	// uint
 		tracePipboyPrimitiveValueUInt((PipboyPrimitiveValue<UInt32>*)pv);
 		break;
-	case 0x2D545F8:	// bool
+	case 0x2D545E8:	// bool
 		tracePipboyPrimitiveValueBool((PipboyPrimitiveValue<bool>*)pv);
 		break;
-	case 0x2D54630:	// int
+	case 0x2D54620:	// int
 		tracePipboyPrimitiveValueInt((PipboyPrimitiveValue<SInt32>*)pv);
 		break;
-	case 0x2D546A0:	// float
+	case 0x2D54690:	// float
 		tracePipboyPrimitiveValueFloat((PipboyPrimitiveValue<float>*)pv);
 		break;
-	case 0x2D53FE8:	// PipboyArray
+	case 0x2D53FD8:	// PipboyArray
 		tracePipboyArray((PipboyArray*)pv);
 		break;
-	case 0x2D55B78:	// PipboyObject
+	case 0x2D55B68:	// PipboyObject
 		tracePipboyObj((PipboyObject*)pv);
 		break;
 	default:
@@ -768,3 +793,110 @@ uintptr_t HasPerkVisitor::Accept(Entry* pEntry) //bool, don't use bool,VS2015 co
 	}
 	return 1;
 }
+
+class traceGFxValue_VisitMembers : public GFxValue::ObjectInterface::ObjVisitor
+{
+public:
+	virtual void Visit(const char * member, GFxValue * value) override
+	{
+		_MESSAGE("member name %s", member);
+		traceGFxValue(value);
+	}
+};
+
+void traceGFxValueInt(GFxValue* fxv)
+{
+	_MESSAGE("type:     int\t\tvalue: %16i\t\thex: 0x%016I64X", fxv->GetInt(), fxv->GetInt());
+}
+
+void traceGFxValueUInt(GFxValue* fxv)
+{
+	_MESSAGE("type:     uint\t\tvalue: %16u\t\thex: 0x%016I64X", fxv->GetUInt(), fxv->GetUInt());
+}
+
+void traceGFxValueFloat(GFxValue* fxv)
+{
+	_MESSAGE("type:   float\t\tvalue: %16f\t\thex: 0x%016I64X", fxv->GetNumber(), fxv->GetNumber());
+};
+
+void traceGFxValueBool(GFxValue* fxv)
+{
+	_MESSAGE("type:    bool\t\tvalue: %16s", fxv->GetBool() ? "true" : "false");
+};
+
+void traceGFxValueString(GFxValue* fxv)
+{
+	_MESSAGE("type:  string\t\tvalue: %16s", fxv->GetString());
+};
+
+void traceGFxValueArray(GFxValue* fxv)
+{
+	_MESSAGE("type:  array\t\titem count:%i", fxv->GetArraySize());
+
+	gLog.Indent();
+	for (size_t i = 0; i < fxv->GetArraySize(); i++)
+	{
+		GFxValue item;
+		fxv->GetElement(i, &item);
+		traceGFxValue(&item);
+	};
+	gLog.Outdent();
+}
+
+void traceGFxValueObject(GFxValue* fxv)
+{
+	_MESSAGE("type:  object");
+	gLog.Indent();
+	traceGFxValue_VisitMembers dm;
+	fxv->VisitMembers(&dm);
+	gLog.Outdent();
+}
+
+
+
+void traceGFxValue(GFxValue* fxv)
+{
+	int type = fxv->type & 0x8F;
+
+	switch (type)
+	{
+	case GFxValue::kType_Undefined:
+		_MESSAGE("type:  kType_Undefined");
+		break;
+	case GFxValue::kType_Null:
+		_MESSAGE("type:  kType_Null");
+		break;
+	case GFxValue::kType_Bool:
+		traceGFxValueBool(fxv);
+		break;
+	case GFxValue::kType_Int:
+		traceGFxValueInt(fxv);
+		break;
+	case GFxValue::kType_UInt:
+		traceGFxValueUInt(fxv);
+		break;
+	case GFxValue::kType_Number:
+		traceGFxValueFloat(fxv);
+		break;
+	case GFxValue::kType_String:
+		traceGFxValueString(fxv);
+		break;
+	case GFxValue::kType_Unknown7:
+		_MESSAGE("type:  kType_Unknown7");
+		break;
+	case GFxValue::kType_Object:
+		traceGFxValueObject(fxv);
+		break;
+	case GFxValue::kType_Array:
+		traceGFxValueArray(fxv);
+		break;
+	case GFxValue::kType_DisplayObject:
+		traceGFxValueObject(fxv);
+		break;
+	case GFxValue::kType_Function:
+		_MESSAGE("type:  kType_Function");
+		break;
+	default:
+		break;
+	}
+};

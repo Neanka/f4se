@@ -1523,9 +1523,21 @@ extern "C"
 
 		// Check game version
 		if (f4se->runtimeVersion != CURRENT_RUNTIME_VERSION) {
-			_WARNING("WARNING: Unsupported runtime version %08X. This DLL is built for v1.10.89 only.", f4se->runtimeVersion);
-			MessageBox(NULL, (LPCSTR)("Unsupported runtime version (expected v1.10.89). \n" + mName + " will be disabled.").c_str(), (LPCSTR)mName.c_str(), MB_OK | MB_ICONEXCLAMATION);
-			//	return false;
+			char str[512];
+			sprintf_s(str, sizeof(str), "Your game version: v%d.%d.%d.%d\nExpected version: v%d.%d.%d.%d\n%s will be disabled.",
+				GET_EXE_VERSION_MAJOR(f4se->runtimeVersion),
+				GET_EXE_VERSION_MINOR(f4se->runtimeVersion),
+				GET_EXE_VERSION_BUILD(f4se->runtimeVersion),
+				GET_EXE_VERSION_SUB(f4se->runtimeVersion),
+				GET_EXE_VERSION_MAJOR(CURRENT_RUNTIME_VERSION),
+				GET_EXE_VERSION_MINOR(CURRENT_RUNTIME_VERSION),
+				GET_EXE_VERSION_BUILD(CURRENT_RUNTIME_VERSION),
+				GET_EXE_VERSION_SUB(CURRENT_RUNTIME_VERSION),
+				mName.c_str()
+			);
+
+			MessageBox(NULL, str, mName.c_str(), MB_OK | MB_ICONEXCLAMATION);
+			return false;
 		}
 
 		// get the papyrus interface and query its version

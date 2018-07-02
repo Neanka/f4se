@@ -1,7 +1,6 @@
 #pragma once
 
-#define CURRENT_RUNTIME_VERSION RUNTIME_VERSION_1_10_89
-#define SUPPORTED_RUNTIME_VERSION_STRING "1.10.89"
+#define CURRENT_RUNTIME_VERSION CURRENT_RELEASE_RUNTIME
 
 #include "f4se/PluginAPI.h"
 #include "f4se/GameAPI.h"
@@ -684,7 +683,6 @@ public:
 STATIC_ASSERT(offsetof(PipboyObject, table) == 0x18);
 */
 
-
 class PipboyArray : public PipboyValue
 {
 public:
@@ -723,6 +721,22 @@ extern RelocAddr <_getInventoryItemByHandleID> getInventoryItemByHandleID;
 
 BGSInventoryItem* getInventoryItemByIndex(UInt32 index);
 BGSInventoryItem* getInventoryItemByHandleID_int(UInt32 handleID);
+
+void traceGFxValueInt(GFxValue * fxv);
+
+void traceGFxValueUInt(GFxValue * fxv);
+
+void traceGFxValueFloat(GFxValue * fxv);
+
+void traceGFxValueBool(GFxValue * fxv);
+
+void traceGFxValueString(GFxValue * fxv);
+
+void traceGFxValueArray(GFxValue * fxv);
+
+void traceGFxValueObject(GFxValue * fxv);
+
+void traceGFxValue(GFxValue * fxv);
 
 /*
 class PipboyInventoryMenu;
@@ -838,7 +852,7 @@ struct InvInterfaceStateChangeEvent
 
 };
 
-struct unkstr
+struct unkInventoryStruct
 {
 	UInt32 HandleID;
 	UInt32 pad0c;
@@ -849,19 +863,22 @@ struct unkstr
 	UInt32 unk18;
 	UInt32 unk1c;
 };
-STATIC_ASSERT(sizeof(unkstr) == 0x20);
+STATIC_ASSERT(sizeof(unkInventoryStruct) == 0x20);
 
 class ContainerMenuBase : public GameMenuBase
 {
 public:
 	BSTEventSink<InvInterfaceStateChangeEvent>			eventSink1;						// E0
 	BSTEventSink<MenuOpenCloseEvent>					eventSink2;						// E8
-	UInt64												unkD0[(0x200 - 0xF0) / 8];		// F0
-	tArray<unkstr>										playerItems;					// 200
+	UInt64												unkF0[(0x200 - 0xF0) / 8];		// F0
+	tArray<unkInventoryStruct>							playerItems;					// 200
 	UInt64												unk218[(0x280 - 0x218) / 8];	// 218
-	tArray<unkstr>										contItems;						// 280
+	tArray<unkInventoryStruct>							contItems;						// 280
+	UInt64												unk298[(0x428 - 0x298) / 8];	// 298
+	UInt32												targetHandle;					// 428
+	UInt32												unk42c;							// 42c
 };
-STATIC_ASSERT(sizeof(ContainerMenuBase) == 0x298);
+STATIC_ASSERT(sizeof(ContainerMenuBase) == 0x430);
 
 class ContainerMenu : public ContainerMenuBase
 {

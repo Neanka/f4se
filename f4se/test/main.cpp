@@ -17,111 +17,102 @@ typedef void(*_ContainerMenuInvoke)(ContainerMenu* menu, GFxFunctionHandler::Arg
 RelocAddr <_ContainerMenuInvoke> ContainerMenuInvoke(0x00B0A280);
 _ContainerMenuInvoke ContainerMenuInvoke_Original;
 
+class PipboyMenu;
+typedef void(*_PipboyMenuInvoke)(PipboyMenu* menu, GFxFunctionHandler::Args* args);
+
+RelocAddr <_PipboyMenuInvoke> PipboyMenuInvoke(0x00B93F60);
+_PipboyMenuInvoke PipboyMenuInvoke_Original;
+
+void PipboyMenuInvoke_Hook(PipboyMenu * menu, GFxFunctionHandler::Args * args) {
+
+
+	if (args->optionID == 0xD && args->numArgs == 4 && args->args[0].GetType() == GFxValue::kType_Int \
+		&& args->args[1].GetType() == GFxValue::kType_Array && args->args[2].GetType() == GFxValue::kType_Array)
+	{
+		SInt32 selectedIndex = args->args[0].GetInt();
+		_MESSAGE("%i selected index", selectedIndex);
+		BSFixedString str = BSFixedString("HandleID");
+		PipboyObject::PipboyTableItem *ti = (*g_PipboyDataManager)->inventoryObjects[selectedIndex]->table.Find(&str);
+		if (ti)
+		{
+			UInt32 val = ((PipboyPrimitiveValue<UInt32>*)(ti->value))->value;
+			_MESSAGE("handleID: %u", val);
+		}
+		BSFixedString str2 = BSFixedString("StackID");
+		PipboyObject::PipboyTableItem *ti2 = (*g_PipboyDataManager)->inventoryObjects[selectedIndex]->table.Find(&str2);
+		if (ti2)
+		{
+			tracePipboyArray((PipboyArray*)ti2->value);
+		}
+	}
+	return PipboyMenuInvoke_Original(menu, args);
+}
 
 void ContainerMenuInvoke_Hook(ContainerMenu * menu, GFxFunctionHandler::Args * args) {
+	ContainerMenuInvoke_Original(menu, args);
+	if (args->optionID != 3) return;
+	int itemIndex = args->args[0].GetInt();
+	if (itemIndex < 0) return;
+	int isContainer = args->args[1].GetInt();
+	auto movie = menu->movie;
+	auto root = movie->movieRoot;
+	GFxValue ListArray, ListArrayItem, ListArrayItemCardInfoList;
+	BGSInventoryItem* ii = nullptr;
+	if (isContainer == 0)
+	{
+		root->GetVariable(&ListArray, "root1.FilterHolder_mc.Menu_mc.playerListArray");
+	}
+	else
+	{
+		root->GetVariable(&ListArray, "root1.FilterHolder_mc.Menu_mc.containerListArray");
+	}
+	ListArray.GetElement(itemIndex, &ListArrayItem);
+	if (ListArrayItem.HasMember("haveExtraData")) return;
+	GFxValue tempVal;
+	ListArrayItem.GetMember("handle", &tempVal);
+	UInt32 handleID = tempVal.GetUInt();
+	ListArrayItem.GetMember("stackArray", &tempVal);
+	tempVal.GetElement(0, &tempVal);
+	UInt32 stackID = tempVal.GetUInt();
+	ii = getInventoryItemByHandleID_int(handleID);
+	if (!ii) return;
+	ListArrayItem.GetMember("ItemCardInfoList", &ListArrayItemCardInfoList);
 
-	if (args->optionID == 0 || args->optionID == 3) return ContainerMenuInvoke_Original(menu, args);
-	_MESSAGE("Update item cards");
-		auto movie = menu->movie;
-		auto root = movie->movieRoot;
+	// put ur code there. use ii and stackID variables
 
-		GFxValue playerListArray, playerListArrayItem, playerListArrayItemCardInfoList;
-		root->GetVariable(&playerListArray, "root1.FilterHolder_mc.Menu_mc.playerListArray");
-
-		for (size_t i = 0; i < playerListArray.GetArraySize(); i++)
-		{
-			playerListArray.GetElement(i, &playerListArrayItem);
-			if (!playerListArrayItem.HasMember("haveExtraData"))
+	TESForm* form = ii->form;
+	BGSInventoryItem::Stack* currentStack = ii->stack;
+	while (stackID != 0)
+	{
+		currentStack = currentStack->next;
+		stackID--;
+	}
+	if (form->formType == kFormType_WEAP)
+	{
+		TESObjectWEAP* weap = (TESObjectWEAP*)form;
+		float APCost = weap->weapData.actionCost;
+		ExtraDataList * stackDataList = currentStack->extraData;
+		if (stackDataList) {
+			ExtraInstanceData * eid = DYNAMIC_CAST(stackDataList->GetByType(kExtraData_InstanceData), BSExtraData, ExtraInstanceData);
+			if (eid)
 			{
-				playerListArrayItem.GetMember("ItemCardInfoList", &playerListArrayItemCardInfoList);
-
-				BGSInventoryItem* ii = getInventoryItemByHandleID_int(menu->playerItems[i].HandleID);
-				if (ii)
-				{
-					TESForm* form = ii->form;
-					BGSInventoryItem::Stack* currentStack = ii->stack;
-					UInt16 stackid = menu->playerItems[i].stackid;
-					while (stackid != 0)
-					{
-						currentStack = currentStack->next;
-						stackid--;
-					}
-					if (form->formType == kFormType_WEAP)
-					{
-						TESObjectWEAP* weap = (TESObjectWEAP*)form;
-						float APCost = weap->weapData.actionCost;
-						ExtraDataList * stackDataList = currentStack->extraData;
-						if (stackDataList) {
-							ExtraInstanceData * eid = DYNAMIC_CAST(stackDataList->GetByType(kExtraData_InstanceData), BSExtraData, ExtraInstanceData);
-							if (eid)
-							{
-								APCost = ((TESObjectWEAP::InstanceData*)eid->instanceData)->actionCost;
-							}
-						}
-						GFxValue extraData;
-						root->CreateObject(&extraData);
-						RegisterString(&extraData, root, "text", "APCost");
-						RegisterString(&extraData, root, "value", std::to_string(int(round(APCost))).c_str());
-						RegisterInt(&extraData, "difference", 0);
-						playerListArrayItemCardInfoList.PushBack(&extraData);
-					}
-				}
-
-				GFxValue haveExtraData;
-				haveExtraData.SetBool(true);
-				playerListArrayItem.SetMember("haveExtraData", &haveExtraData);
+				APCost = ((TESObjectWEAP::InstanceData*)eid->instanceData)->actionCost;
 			}
 		}
+		GFxValue extraData;
+		root->CreateObject(&extraData);
+		RegisterString(&extraData, root, "text", "APCost");
+		RegisterString(&extraData, root, "value", std::to_string(int(round(APCost))).c_str());
+		RegisterInt(&extraData, "difference", 0);
+		ListArrayItemCardInfoList.PushBack(&extraData);
+	}
 
+	// end of ur code
 
-		GFxValue containerListArray, containerListArrayItem, containerListArrayItemCardInfoList;
-		root->GetVariable(&containerListArray, "root1.FilterHolder_mc.Menu_mc.containerListArray");
-
-		for (size_t i = 0; i < containerListArray.GetArraySize(); i++)
-		{
-			containerListArray.GetElement(i, &containerListArrayItem);
-			if (!containerListArrayItem.HasMember("haveExtraData"))
-			{
-				containerListArrayItem.GetMember("ItemCardInfoList", &containerListArrayItemCardInfoList);
-
-				BGSInventoryItem* ii = getInventoryItemByHandleID_int(menu->contItems[i].HandleID);
-				if (ii)
-				{
-					TESForm* form = ii->form;
-					BGSInventoryItem::Stack* currentStack = ii->stack;
-					UInt16 stackid = menu->contItems[i].stackid;
-					while (stackid != 0)
-					{
-						currentStack = currentStack->next;
-						stackid--;
-					}
-					if (form->formType == kFormType_WEAP)
-					{
-						TESObjectWEAP* weap = (TESObjectWEAP*)form;
-						float APCost = weap->weapData.actionCost;
-						ExtraDataList * stackDataList = currentStack->extraData;
-						if (stackDataList) {
-							ExtraInstanceData * eid = DYNAMIC_CAST(stackDataList->GetByType(kExtraData_InstanceData), BSExtraData, ExtraInstanceData);
-							if (eid)
-							{
-								APCost = ((TESObjectWEAP::InstanceData*)eid->instanceData)->actionCost;
-							}
-						}
-						GFxValue extraData;
-						root->CreateObject(&extraData);
-						RegisterString(&extraData, root, "text", "APCost");
-						RegisterString(&extraData, root, "value", std::to_string(int(round(APCost))).c_str());
-						RegisterInt(&extraData, "difference", 0);
-						containerListArrayItemCardInfoList.PushBack(&extraData);
-					}
-				}
-
-				GFxValue haveExtraData;
-				haveExtraData.SetBool(true);
-				containerListArrayItem.SetMember("haveExtraData", &haveExtraData);
-			}
-		}
-		return ContainerMenuInvoke_Original(menu, args);
+	GFxValue haveExtraData;
+	haveExtraData.SetBool(true);
+	ListArrayItem.SetMember("haveExtraData", &haveExtraData);
+	return;
 }
 
 bool RegisterScaleform(GFxMovieView * view, GFxValue * f4se_root)
@@ -162,9 +153,21 @@ extern "C"
 		g_pluginHandle = f4se->GetPluginHandle();
 
 		// Check game version
-		if (f4se->runtimeVersion != RUNTIME_VERSION_1_10_89) {
-			_WARNING("WARNING: Unsupported runtime version %08X. This DLL is built for v1.10.89 only.", f4se->runtimeVersion);
-			MessageBox(NULL, (LPCSTR)("Unsupported runtime version (expected v1.10.89). \n"+mName+" will be disabled.").c_str(), (LPCSTR)mName.c_str(), MB_OK | MB_ICONEXCLAMATION);
+		if (f4se->runtimeVersion != CURRENT_RUNTIME_VERSION) {
+			char str[512];
+			sprintf_s(str, sizeof(str), "Your game version: v%d.%d.%d.%d\nExpected version: v%d.%d.%d.%d\n%s will be disabled.",
+				GET_EXE_VERSION_MAJOR(f4se->runtimeVersion),
+				GET_EXE_VERSION_MINOR(f4se->runtimeVersion),
+				GET_EXE_VERSION_BUILD(f4se->runtimeVersion),
+				GET_EXE_VERSION_SUB(f4se->runtimeVersion),
+				GET_EXE_VERSION_MAJOR(CURRENT_RUNTIME_VERSION),
+				GET_EXE_VERSION_MINOR(CURRENT_RUNTIME_VERSION),
+				GET_EXE_VERSION_BUILD(CURRENT_RUNTIME_VERSION),
+				GET_EXE_VERSION_SUB(CURRENT_RUNTIME_VERSION),
+				mName.c_str()
+			);
+
+			MessageBox(NULL, str, mName.c_str(), MB_OK | MB_ICONEXCLAMATION);
 			return false;
 		}
 
@@ -180,6 +183,8 @@ extern "C"
 
 	bool F4SEPlugin_Load(const F4SEInterface *f4se)
 	{
+		InitAddresses();
+		RVAManager::UpdateAddresses(f4se->runtimeVersion);
 		logMessage("load");
 		if (!g_branchTrampoline.Create(1024 * 64))
 		{
@@ -220,6 +225,32 @@ extern "C"
 
 			g_branchTrampoline.Write6Branch(ContainerMenuInvoke.GetUIntPtr(), (uintptr_t)ContainerMenuInvoke_Hook);
 		}
+
+		{
+			struct PipboyMenuInvoke_Code : Xbyak::CodeGenerator {
+				PipboyMenuInvoke_Code(void * buf) : Xbyak::CodeGenerator(4096, buf)
+				{
+					Xbyak::Label retnLabel;
+
+					mov(r11, rsp);
+					push(rbp);
+					push(rbx);
+					jmp(ptr[rip + retnLabel]);
+
+					L(retnLabel);
+					dq(PipboyMenuInvoke.GetUIntPtr() + 5);
+				}
+			};
+
+			void * codeBuf = g_localTrampoline.StartAlloc();
+			PipboyMenuInvoke_Code code(codeBuf);
+			g_localTrampoline.EndAlloc(code.getCurr());
+
+			PipboyMenuInvoke_Original = (_PipboyMenuInvoke)codeBuf;
+
+			g_branchTrampoline.Write5Branch(PipboyMenuInvoke.GetUIntPtr(), (uintptr_t)PipboyMenuInvoke_Hook);
+		}
+
 		return true;
 	}
 

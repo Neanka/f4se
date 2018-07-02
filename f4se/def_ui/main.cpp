@@ -12,6 +12,9 @@
 #include "f4se/ScaleformLoader.h"
 #include "f4se/Translation.h"
 
+std::string mName = "DEF_UI Translator";
+UInt32 mVer = 1;
+
 PluginHandle			    g_pluginHandle = kPluginHandle_Invalid;
 
 F4SEMessagingInterface		*g_messaging = NULL;
@@ -50,8 +53,20 @@ extern "C"
 
 		// Check game version
 		if (f4se->runtimeVersion != CURRENT_RUNTIME_VERSION) {
-			_WARNING("WARNING: Unsupported runtime version %08X. This DLL is built for v1.10.89 only.", f4se->runtimeVersion);
-			MessageBox(NULL, "Unsupported runtime version (expected v1.10.89). \ndef_ui will be disabled.", "def_ui", MB_OK | MB_ICONEXCLAMATION);
+			char str[512];
+			sprintf_s(str, sizeof(str), "Your game version: v%d.%d.%d.%d\nExpected version: v%d.%d.%d.%d\n%s will be disabled.",
+				GET_EXE_VERSION_MAJOR(f4se->runtimeVersion),
+				GET_EXE_VERSION_MINOR(f4se->runtimeVersion),
+				GET_EXE_VERSION_BUILD(f4se->runtimeVersion),
+				GET_EXE_VERSION_SUB(f4se->runtimeVersion),
+				GET_EXE_VERSION_MAJOR(CURRENT_RUNTIME_VERSION),
+				GET_EXE_VERSION_MINOR(CURRENT_RUNTIME_VERSION),
+				GET_EXE_VERSION_BUILD(CURRENT_RUNTIME_VERSION),
+				GET_EXE_VERSION_SUB(CURRENT_RUNTIME_VERSION),
+				mName.c_str()
+			);
+
+			MessageBox(NULL, str, mName.c_str(), MB_OK | MB_ICONEXCLAMATION);
 			return false;
 		}
 
