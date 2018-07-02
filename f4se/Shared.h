@@ -885,6 +885,11 @@ class ContainerMenu : public ContainerMenuBase
 
 };
 
+class BarterMenu : public ContainerMenuBase
+{
+
+};
+
 // E8
 class TESCombatStyle : public TESForm
 {

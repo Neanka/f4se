@@ -12,7 +12,7 @@ PluginHandle			    g_pluginHandle = kPluginHandle_Invalid;
 
 F4SEScaleformInterface		*g_scaleform = NULL;
 
-typedef void(*_ContainerMenuInvoke)(ContainerMenu* menu, GFxFunctionHandler::Args* args);
+typedef void(*_ContainerMenuInvoke)(ContainerMenuBase* menu, GFxFunctionHandler::Args* args);
 
 RelocAddr <_ContainerMenuInvoke> ContainerMenuInvoke(0x00B0A280);
 _ContainerMenuInvoke ContainerMenuInvoke_Original;
@@ -48,7 +48,7 @@ void PipboyMenuInvoke_Hook(PipboyMenu * menu, GFxFunctionHandler::Args * args) {
 	return PipboyMenuInvoke_Original(menu, args);
 }
 
-void ContainerMenuInvoke_Hook(ContainerMenu * menu, GFxFunctionHandler::Args * args) {
+void ContainerMenuInvoke_Hook(ContainerMenuBase * menu, GFxFunctionHandler::Args * args) {
 	ContainerMenuInvoke_Original(menu, args);
 	if (args->optionID != 3) return;
 	int itemIndex = args->args[0].GetInt();
@@ -68,12 +68,38 @@ void ContainerMenuInvoke_Hook(ContainerMenu * menu, GFxFunctionHandler::Args * a
 	}
 	ListArray.GetElement(itemIndex, &ListArrayItem);
 	if (ListArrayItem.HasMember("haveExtraData")) return;
-	GFxValue tempVal;
-	ListArrayItem.GetMember("handle", &tempVal);
-	UInt32 handleID = tempVal.GetUInt();
-	ListArrayItem.GetMember("stackArray", &tempVal);
-	tempVal.GetElement(0, &tempVal);
-	UInt32 stackID = tempVal.GetUInt();
+	UInt32 handleID = 0;
+	UInt32 stackID = 0;
+	if (DYNAMIC_CAST(menu, GameMenuBase, ContainerMenu))
+	{
+		//_MESSAGE("is Container menu");
+		if (isContainer)
+		{
+			handleID = menu->contItems[itemIndex].HandleID;
+			stackID = menu->contItems[itemIndex].stackid;
+		}
+		else
+		{
+			handleID = menu->playerItems[itemIndex].HandleID;
+			stackID = menu->playerItems[itemIndex].stackid;
+		}
+	}
+	else if (DYNAMIC_CAST(menu, GameMenuBase, BarterMenu))
+	{
+		//_MESSAGE("is Barter menu");
+		GFxValue tempVal;
+		ListArrayItem.GetMember("handle", &tempVal);
+		if (tempVal.type == GFxValue::kType_Undefined) return;
+		handleID = tempVal.GetUInt();
+		ListArrayItem.GetMember("stackArray", &tempVal);
+		tempVal.GetElement(0, &tempVal);
+		stackID = tempVal.GetUInt();
+	}
+	else
+	{
+		return;
+	}
+
 	ii = getInventoryItemByHandleID_int(handleID);
 	if (!ii) return;
 	ListArrayItem.GetMember("ItemCardInfoList", &ListArrayItemCardInfoList);
