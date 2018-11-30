@@ -68,6 +68,32 @@ namespace Utils {
 	}
 }
 
+namespace HookUtil
+{
+
+	template<class Ty>
+	static inline Ty SafeWrite_Impl(uintptr_t addr, Ty data)
+	{
+		DWORD	oldProtect = 0;
+		Ty		oldVal = 0;
+
+		if (VirtualProtect((void *)addr, sizeof(Ty), PAGE_EXECUTE_READWRITE, &oldProtect))
+		{
+			Ty *p = (Ty*)addr;
+			oldVal = *p;
+			*p = data;
+			VirtualProtect((void *)addr, sizeof(Ty), oldProtect, &oldProtect);
+		}
+
+		return oldVal;
+	}
+
+	uintptr_t SafeWrite64(uintptr_t addr, uintptr_t data)
+	{
+		return SafeWrite_Impl(addr, data);
+	}
+}
+
 std::string _GetConfigOptionString(std::string file, const char * section, const char * key)
 {
 
@@ -121,11 +147,16 @@ RVA <void*> g_UIManager;
 RVA <PipboyDataManager*> g_PipboyDataManager;
 RVA <_SetPerkPoints_int> SetPerkPoints_int;
 RVA <_SetPlayerName> SetPlayerName_int;
-RVA <_PlaySound> PlaySound_int;
-RVA <_PlaySound2> PlaySound2_int;
+
 RVA <_LevelupMenuProcessMessage> LevelupMenuProcessMessage;
 RVA <_LevelupMenuPlayPerkSound> LevelupMenuPlayPerkSound;
 RVA <_LevelupMenuStopPerkSound> LevelupMenuStopPerkSound;
+RVA <_GetSoundByName> GetSoundByName;
+
+
+RVA <_LevelupMenuPlaySound_funk1> LevelupMenuPlaySound_funk1;
+RVA <_LevelupMenuPlaySound_funk2> LevelupMenuPlaySound_funk2;
+RVA <void*> LevelupMenuPlaySound_var1;
 
 const char* ObScriptCommand_SexChange_sig = "40 55 53 41 56 48 8B EC 48 81 EC 80 00 00 00";
 
@@ -154,13 +185,76 @@ RVA <_UnEquipItem_int> UnEquipItem_int;
 
 RVA <void*> unk_itemManager;
 
+// WSM
 
+RVA <WorkshopEntry*> g_rootWorkshopEntry; // (0x59198D0);
+RVA <UInt16> g_workshopDepth; //(0x591865C)
 
+RVA <_GetSelectedWorkshopEntry> GetSelectedWorkshopEntry; // (0x01F8C20);
+
+RVA <_WM_Up> WM_Up; // (0x0BF1B40);
+
+RVA <_OnWorkshopMenuButtonEvent> OnWorkshopMenuButtonEvent; // (0x00BEFD60);
+
+RVA <_WorkshopMenuProcessMessage> WorkshopMenuProcessMessage; // (0x00BEF4C0);
+
+RVA <uintptr_t> wsm_firstAddress; // 0xBF1B90
+RVA <uintptr_t> wsm_secondAddress; // 0xBF1B7F
+
+void InitWSMAddresses()
+{
+	g_rootWorkshopEntry = RVA <WorkshopEntry*>(
+		"g_rootWorkshopEntry", {
+			{ RUNTIME_VERSION_1_10_114, 0x059198E0 },
+			{ RUNTIME_VERSION_1_10_111, 0x059198E0 },
+			{ RUNTIME_VERSION_1_10_106, 0x059198E0 },
+		}, WSM_SIG, 4, 3, 7);
+	// put into plugin load: g_rootWorkshopEntry.SetEffective(g_rootWorkshopEntry.GetUIntPtr()-0x10);
+	g_workshopDepth = RVA <UInt16>(
+		"g_workshopDepth", {
+			{ RUNTIME_VERSION_1_10_114, 0x0591865C },
+			{ RUNTIME_VERSION_1_10_111, 0x0591865C },
+			{ RUNTIME_VERSION_1_10_106, 0x0591865C },
+		}, WSM_SIG, 18, 4, 8);
+	GetSelectedWorkshopEntry = RVA <_GetSelectedWorkshopEntry>(
+		"GetSelectedWorkshopEntry", {
+			{ RUNTIME_VERSION_1_10_114, 0x001F8C20 },
+			{ RUNTIME_VERSION_1_10_111, 0x001F8C20 },
+			{ RUNTIME_VERSION_1_10_106, 0x001F8C20 },
+		}, "48 89 5C 24 08 45 33 C9 4C 8B C2");
+	OnWorkshopMenuButtonEvent = RVA <_OnWorkshopMenuButtonEvent>(
+		"OnWorkshopMenuButtonEvent", {
+			{ RUNTIME_VERSION_1_10_114, 0x00BEFD60 },
+			{ RUNTIME_VERSION_1_10_111, 0x00BEFD60 },
+			{ RUNTIME_VERSION_1_10_106, 0x00BEFD60 },
+		}, "48 8B C4 55 41 56 41 57 48 8D A8 28 FF FF FF");
+	WorkshopMenuProcessMessage = RVA <_WorkshopMenuProcessMessage>(
+		"WorkshopMenuProcessMessage", {
+			{ RUNTIME_VERSION_1_10_114, 0x00BEF4C0 },
+			{ RUNTIME_VERSION_1_10_111, 0x00BEF4C0 },
+			{ RUNTIME_VERSION_1_10_106, 0x00BEF4C0 },
+		}, "48 89 5C 24 08 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 70 FF FF FF");
+	wsm_firstAddress = RVA <uintptr_t>(
+		"wsm_firstAddress", {
+			{ RUNTIME_VERSION_1_10_114, 0x00BF1B90 },
+			{ RUNTIME_VERSION_1_10_111, 0x00BF1B90 },
+			{ RUNTIME_VERSION_1_10_106, 0x00BF1B90 },
+		}, WSM_SIG1, 30);
+	wsm_secondAddress = RVA <uintptr_t>(
+		"wsm_secondAddress", {
+			{ RUNTIME_VERSION_1_10_114, 0x00BF1B7F },
+			{ RUNTIME_VERSION_1_10_111, 0x00BF1B7F },
+			{ RUNTIME_VERSION_1_10_106, 0x00BF1B7F },
+		}, WSM_SIG1, 13);
+}
 
 void InitExeAddress()
 {
 	ExecuteCommand = RVA <_ExecuteCommand>(
 		"ExecuteCommand", {
+			{ RUNTIME_VERSION_1_10_114, 0x0125B380 },
+			{ RUNTIME_VERSION_1_10_111, 0x0125B380 },
+			{ RUNTIME_VERSION_1_10_106, 0x0125B380 },
 			{ RUNTIME_VERSION_1_10_98, 0x0125B380 },
 			{ RUNTIME_VERSION_1_10_89, 0x0125B340 },
 			{ RUNTIME_VERSION_1_10_82, 0x0125B2E0 },
@@ -178,6 +272,8 @@ void InitTIMAddress()
 {
 	SetPlayerName_int = RVA <_SetPlayerName>(
 		"SetPlayerName_int", {
+			{ RUNTIME_VERSION_1_10_114, 0x00BB9040 },
+			{ RUNTIME_VERSION_1_10_106, 0x00BB9040 },
 			{ RUNTIME_VERSION_1_10_98, 0x00BB9040 },
 			{ RUNTIME_VERSION_1_10_89, 0x00BB9000 },
 			{ RUNTIME_VERSION_1_10_82, 0x00BB8FA0 },
@@ -194,6 +290,9 @@ void InitAddresses()
 {
 	HasPerk = RVA <_HasPerk>(
 		"HasPerk", {
+			{ RUNTIME_VERSION_1_10_114, 0x00DA64E0 },
+			{ RUNTIME_VERSION_1_10_111, 0x00DA64E0 },
+			{ RUNTIME_VERSION_1_10_106, 0x00DA64E0 },
 			{ RUNTIME_VERSION_1_10_98, 0x00DA64E0 },
 			{ RUNTIME_VERSION_1_10_89, 0x00DA64A0 },
 			{ RUNTIME_VERSION_1_10_82, 0x00DA6440 },
@@ -207,6 +306,9 @@ void InitAddresses()
 		}, "48 83 EC 28 48 8B 81 00 03 00 00 48 85 C0 74 ? 4C 8B C2");
 	AddPerk = RVA <_AddPerk>(
 		"AddPerk", {
+			{ RUNTIME_VERSION_1_10_114, 0x00DA60E0 },
+			{ RUNTIME_VERSION_1_10_111, 0x00DA60E0 },
+			{ RUNTIME_VERSION_1_10_106, 0x00DA60E0 },
 			{ RUNTIME_VERSION_1_10_98, 0x00DA60E0 },
 			{ RUNTIME_VERSION_1_10_89, 0x00DA60A0 },
 			{ RUNTIME_VERSION_1_10_82, 0x00DA6040 },
@@ -220,6 +322,9 @@ void InitAddresses()
 		}, "48 89 5C 24 08 48 89 6C 24 10 56 57 41 56 48 83 EC 40 48 8D 99 34 04 00 00");
 	GetLevel = RVA <_GetLevel>(
 		"GetLevel", {
+			{ RUNTIME_VERSION_1_10_114, 0x00D79D70 },
+			{ RUNTIME_VERSION_1_10_111, 0x00D79D70 },
+			{ RUNTIME_VERSION_1_10_106, 0x00D79D70 },
 			{ RUNTIME_VERSION_1_10_98, 0x00D79D70 },
 			{ RUNTIME_VERSION_1_10_89, 0x00D79D30 },
 			{ RUNTIME_VERSION_1_10_82, 0x00D79CD0 },
@@ -233,6 +338,9 @@ void InitAddresses()
 		}, "48 8B 89 E0 00 00 00 48 83 C1 68 E9 ? ? ? ?");
 	GetItemCount = RVA <_GetItemCount>(
 		"GetItemCount", {
+			{ RUNTIME_VERSION_1_10_114, 0x013FB5E0 },
+			{ RUNTIME_VERSION_1_10_111, 0x013FB5E0 },
+			{ RUNTIME_VERSION_1_10_106, 0x013FB5E0 },
 			{ RUNTIME_VERSION_1_10_98, 0x013FB5E0 },
 			{ RUNTIME_VERSION_1_10_89, 0x013FB5A0 },
 			{ RUNTIME_VERSION_1_10_82, 0x013FB540 },
@@ -246,10 +354,13 @@ void InitAddresses()
 		}, "48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57 48 83 EC 40 49 8B F9 41 0F B6 E8");
 	g_main = RVA <uintptr_t>(
 		"g_main", {
-			{ RUNTIME_VERSION_1_10_98, 0x05ADD2C8 },
-			{ RUNTIME_VERSION_1_10_89, 0x05ADD2C8 },
-			{ RUNTIME_VERSION_1_10_82, 0x05ADD2C8 },
-			{ RUNTIME_VERSION_1_10_75, 0x05ADD2C8 },
+			{ RUNTIME_VERSION_1_10_114, 0x05ADD2C8 },
+			{ RUNTIME_VERSION_1_10_111, 0x05ADD2C8 },
+			{ RUNTIME_VERSION_1_10_106, 0x05ADD2C8 },
+		{ RUNTIME_VERSION_1_10_98, 0x05ADD2C8 },
+		{ RUNTIME_VERSION_1_10_89, 0x05ADD2C8 },
+		{ RUNTIME_VERSION_1_10_82, 0x05ADD2C8 },
+		{ RUNTIME_VERSION_1_10_75, 0x05ADD2C8 },
 		{ RUNTIME_VERSION_1_10_64, 0x05ADD2C8 },
 		{ RUNTIME_VERSION_1_10_50, 0x05ADC2C8 },
 		{ RUNTIME_VERSION_1_10_40, 0x05ADE288 },
@@ -266,6 +377,9 @@ void InitAddresses()
 	}, "48 8B 15 ? ? ? ? 48 8D 0D ? ? ? ? 48 83 C2 10", 0, 3, 7);*/ // added in 1 10 75 into f4se
 	GetRandomPercent = RVA <_GetRandomPercent>(
 		"GetRandomPercent", {
+			{ RUNTIME_VERSION_1_10_114, 0x01B12B60 },
+			{ RUNTIME_VERSION_1_10_111, 0x01B12B60 },
+			{ RUNTIME_VERSION_1_10_106, 0x01B12B60 },
 			{ RUNTIME_VERSION_1_10_98, 0x01B12B60 },
 			{ RUNTIME_VERSION_1_10_89, 0x01B12B20 },
 			{ RUNTIME_VERSION_1_10_82, 0x01B12AC0 },
@@ -276,6 +390,9 @@ void InitAddresses()
 		}, "40 53 48 83 EC 20 8B D9 83 F9 01");
 	GetRandomPercent2 = RVA <_GetRandomPercent2>(
 		"GetRandomPercent2", {
+			{ RUNTIME_VERSION_1_10_114, 0x01B12C00 },
+			{ RUNTIME_VERSION_1_10_111, 0x01B12C00 },
+			{ RUNTIME_VERSION_1_10_106, 0x01B12C00 },
 			{ RUNTIME_VERSION_1_10_98, 0x01B12C00 },
 			{ RUNTIME_VERSION_1_10_89, 0x01B12BC0 },
 			{ RUNTIME_VERSION_1_10_82, 0x01B12B60 },
@@ -286,6 +403,9 @@ void InitAddresses()
 		}, "48 89 5C 24 08 57 48 83 EC 20 8B DA 8B F9");
 	SetPerkPoints_int = RVA <_SetPerkPoints_int>(
 		"SetPerkPoints_int", {
+			{ RUNTIME_VERSION_1_10_114, 0x00EB8A80 },
+			{ RUNTIME_VERSION_1_10_111, 0x00EB8A80 },
+			{ RUNTIME_VERSION_1_10_106, 0x00EB8A80 },
 			{ RUNTIME_VERSION_1_10_98, 0x00EB8A80 },
 			{ RUNTIME_VERSION_1_10_89, 0x00EB8A40 },
 			{ RUNTIME_VERSION_1_10_82, 0x00EB89E0 },
@@ -293,26 +413,11 @@ void InitAddresses()
 		{ RUNTIME_VERSION_1_10_64, 0x00EB8A20 },
 		{ RUNTIME_VERSION_1_10_50, 0x0EB8600 },
 		}, "48 83 EC 28 88 91 F1 0C 00 00");
-	PlaySound_int = RVA <_PlaySound>(
-		"PlaySound_int", {
-			{ RUNTIME_VERSION_1_10_98, 0x012BE190 },
-			{ RUNTIME_VERSION_1_10_89, 0x012BE150 },
-			{ RUNTIME_VERSION_1_10_82, 0x012BE0F0 },
-			{ RUNTIME_VERSION_1_10_75, 0x012BE0F0 },
-		{ RUNTIME_VERSION_1_10_64, 0x012BE130 },
-		{ RUNTIME_VERSION_1_10_50, 0x012BDD10 },
-		}, "48 83 EC 38 E8 ? ? ? ? 48 85 C0 74 ? 48 89 5C 24 30");
-	PlaySound2_int = RVA <_PlaySound2>(
-		"PlaySound2_int", {
-			{ RUNTIME_VERSION_1_10_98, 0x012BE200 },
-			{ RUNTIME_VERSION_1_10_89, 0x012BE1C0 },
-			{ RUNTIME_VERSION_1_10_82, 0x012BE160 },
-			{ RUNTIME_VERSION_1_10_75, 0x012BE160 },
-		{ RUNTIME_VERSION_1_10_64, 0x012BE1A0 },
-		{ RUNTIME_VERSION_1_10_50, 0x012BDD80 },
-		}, "48 89 5C 24 08 57 48 83 EC 50 48 8B D9 E8 ? ? ? ?");
 	LevelupMenuProcessMessage = RVA <_LevelupMenuProcessMessage>(
 		"LevelupMenuProcessMessage", {
+			{ RUNTIME_VERSION_1_10_114, 0x00B383C0 },
+			{ RUNTIME_VERSION_1_10_111, 0x00B383C0 },
+			{ RUNTIME_VERSION_1_10_106, 0x00B383C0 },
 			{ RUNTIME_VERSION_1_10_98, 0x00B383C0 },
 			{ RUNTIME_VERSION_1_10_89, 0x00B383C0 },
 			{ RUNTIME_VERSION_1_10_82, 0x00B38360 },
@@ -322,6 +427,9 @@ void InitAddresses()
 		}, "48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 40 48 8B F1 8B 4A 10");
 	LevelupMenuPlayPerkSound = RVA <_LevelupMenuPlayPerkSound>(
 		"LevelupMenuPlayPerkSound", {
+			{ RUNTIME_VERSION_1_10_114, 0x00B397B0 },
+			{ RUNTIME_VERSION_1_10_111, 0x00B397B0 },
+			{ RUNTIME_VERSION_1_10_106, 0x00B397B0 },
 			{ RUNTIME_VERSION_1_10_98, 0x00B397B0 },
 			{ RUNTIME_VERSION_1_10_89, 0x00B397B0 },
 			{ RUNTIME_VERSION_1_10_82, 0x00B39750 },
@@ -331,6 +439,9 @@ void InitAddresses()
 		}, "48 89 5C 24 08 57 48 83 EC 30 48 8B F9 8B CA 33 DB E8 ? ? ? ? 48 85 C0 74 ? 80 78 1A 5F 75 ? 48 8B 98 88 00 00 00 48 81 C7 80 01 00 00");
 	LevelupMenuStopPerkSound = RVA <_LevelupMenuStopPerkSound>(
 		"LevelupMenuStopPerkSound", {
+			{ RUNTIME_VERSION_1_10_114, 0x01AC7FF0 },
+			{ RUNTIME_VERSION_1_10_111, 0x01AC7FF0 },
+			{ RUNTIME_VERSION_1_10_106, 0x01AC7FF0 },
 			{ RUNTIME_VERSION_1_10_98, 0x01AC7FF0 },
 			{ RUNTIME_VERSION_1_10_89, 0x01AC7FB0 },
 			{ RUNTIME_VERSION_1_10_82, 0x01AC7F50 },
@@ -340,6 +451,9 @@ void InitAddresses()
 		}, "40 53 48 83 EC 20 8B 19 83 FB FF 74 ? C6 41 05 02");
 	g_PipboyDataManager = RVA <PipboyDataManager*>(
 		"g_PipboyDataManager", {
+			{ RUNTIME_VERSION_1_10_114, 0x05909B70 },
+			{ RUNTIME_VERSION_1_10_111, 0x05909B70 },
+			{ RUNTIME_VERSION_1_10_106, 0x05909B70 },
 			{ RUNTIME_VERSION_1_10_98, 0x05909B70 },
 			{ RUNTIME_VERSION_1_10_89, 0x05909B70 },
 			{ RUNTIME_VERSION_1_10_82, 0x05909B70 },
@@ -348,8 +462,30 @@ void InitAddresses()
 		{ RUNTIME_VERSION_1_10_50, 0x05908B70 },
 
 		}, "48 8B 0D ? ? ? ? 48 8D 44 24 48 48 8D 54 24 20 48 89 44 24 20 48 8D 44 24 50 48 81 C1 E8 08 00 00 ", 0, 3, 7);
-
-
+	GetSoundByName = RVA <_GetSoundByName>(
+		"_GetSoundByName", {
+			{ RUNTIME_VERSION_1_10_114, 0x0082F5E0 },
+			{ RUNTIME_VERSION_1_10_111, 0x0082F5E0 },
+			{ RUNTIME_VERSION_1_10_106, 0x0082F5E0 },
+		}, "E8 ? ? ? ? 48 85 C0 74 ? C7 44 24 68 FF FF FF FF", 0, 1, 5);
+	LevelupMenuPlaySound_funk1 = RVA <_LevelupMenuPlaySound_funk1>(
+		"_LevelupMenuPlaySound_funk1", {
+			{ RUNTIME_VERSION_1_10_114, 0x01ACA4B0 },
+			{ RUNTIME_VERSION_1_10_111, 0x01ACA4B0 },
+			{ RUNTIME_VERSION_1_10_106, 0x01ACA4B0 },
+		}, "48 8B C4 48 89 58 08 48 89 68 10 48 89 70 18 57 41 54 41 55 41 56 41 57 48 81 EC A0 00 00 00 44 8B 0D ? ? ? ?");
+	LevelupMenuPlaySound_funk2 = RVA <_LevelupMenuPlaySound_funk2>(
+		"_LevelupMenuPlaySound_funk2", {
+			{ RUNTIME_VERSION_1_10_114, 0x01AC7F20 },
+			{ RUNTIME_VERSION_1_10_111, 0x01AC7F20 },
+			{ RUNTIME_VERSION_1_10_106, 0x01AC7F20 },
+		}, "40 53 48 83 EC 20 8B 19 83 FB FF 74 ? C6 41 05 01");
+	LevelupMenuPlaySound_var1 = RVA <void*>(
+		"LevelupMenuPlaySound_var1", {
+			{ RUNTIME_VERSION_1_10_114, 0x05B46208 },
+			{ RUNTIME_VERSION_1_10_111, 0x05B46208 },
+			{ RUNTIME_VERSION_1_10_106, 0x05B46208 },
+		}, "48 8B 1D ? ? ? ? 48 8D 4C 24 40 45 33 C0", 0, 3, 7);
 	//RelocPtr <PipboyDataManager*> g_PipboyDataManager(0x05908B70);
 }
 
@@ -357,6 +493,9 @@ void InitUIManager()
 {
 	UI_AddMessage = RVA <_UI_AddMessage>(
 		"UI_AddMessage", {
+			{ RUNTIME_VERSION_1_10_114, 0x0204CA70 },
+			{ RUNTIME_VERSION_1_10_111, 0x0204CA70 },
+			{ RUNTIME_VERSION_1_10_106, 0x0204CA70 },
 			{ RUNTIME_VERSION_1_10_98, 0x0204CA70 },
 			{ RUNTIME_VERSION_1_10_89, 0x0204CA30 },
 			{ RUNTIME_VERSION_1_10_82, 0x0204C9D0 },
@@ -370,6 +509,9 @@ void InitUIManager()
 		}, "48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 48 89 7C 24 20 41 54 41 56 41 57 48 83 EC 20 44 8B 0D ? ? ? ? 65 48 8B 04 25 58 00 00 00 48 8B E9 4A 8B 34 C8 B9 C0 09 00 00");
 	g_UIManager = RVA <void*>(
 		"g_UIManager", {
+			{ RUNTIME_VERSION_1_10_114, 0x05909B48 },
+			{ RUNTIME_VERSION_1_10_111, 0x05909B48 },
+			{ RUNTIME_VERSION_1_10_106, 0x05909B48 },
 			{ RUNTIME_VERSION_1_10_98, 0x05909B48 },
 			{ RUNTIME_VERSION_1_10_89, 0x05909B48 },
 			{ RUNTIME_VERSION_1_10_82, 0x05909B48 },
@@ -387,6 +529,9 @@ void InitCWAddresses()
 {
 	MultiActivateMenuProcessMessage = RVA <_MultiActivateMenuProcessMessage>(
 		"MultiActivateMenuProcessMessage", {
+			{ RUNTIME_VERSION_1_10_114, 0x00B7B8A0 },
+			{ RUNTIME_VERSION_1_10_111, 0x00B7B8A0 },
+			{ RUNTIME_VERSION_1_10_106, 0x00B7B8A0 },
 			{ RUNTIME_VERSION_1_10_98, 0x00B7B8A0 },
 			{ RUNTIME_VERSION_1_10_89, 0x00B7B860 },
 			{ RUNTIME_VERSION_1_10_82, 0x00B7B800 },
@@ -395,6 +540,9 @@ void InitCWAddresses()
 		}, "48 83 EC 28 44 8B 42 10 41 FF C8 41 83 F8 01");
 	g_multiActivateManager = RVA <MultiActivateManager*>(
 		"g_multiActivateManager", {
+			{ RUNTIME_VERSION_1_10_114, 0x05A9EB50 },
+			{ RUNTIME_VERSION_1_10_111, 0x05A9EB50 },
+			{ RUNTIME_VERSION_1_10_106, 0x05A9EB50 },
 			{ RUNTIME_VERSION_1_10_98, 0x05A9EB50 },
 			{ RUNTIME_VERSION_1_10_89, 0x05A9EB50 },
 			{ RUNTIME_VERSION_1_10_82, 0x05A9EB50 },
@@ -403,6 +551,9 @@ void InitCWAddresses()
 		}, "48 8B 0D ? ? ? ? 48 8D 95 80 03 00 00", 0, 3, 7);
 	commandTargetCompanionRef = RVA <UInt32*>(
 		"commandTargetCompanionRef", {
+			{ RUNTIME_VERSION_1_10_114, 0x05A9909C },
+			{ RUNTIME_VERSION_1_10_111, 0x05A9909C },
+			{ RUNTIME_VERSION_1_10_106, 0x05A9909C },
 			{ RUNTIME_VERSION_1_10_98, 0x05A9909C },
 			{ RUNTIME_VERSION_1_10_89, 0x05A9909C },
 			{ RUNTIME_VERSION_1_10_82, 0x05A9909C },
@@ -411,6 +562,9 @@ void InitCWAddresses()
 		}, "48 89 7C 24 38 48 C7 44 24 20 00 00 00 00 4C 89 74 24 30", -7, 3, 7);
 	CompanionListenerUnk03 = RVA <_CompanionListenerUnk03>(
 		"CompanionListenerUnk03", {
+			{ RUNTIME_VERSION_1_10_114, 0x009FFAC0 },
+			{ RUNTIME_VERSION_1_10_111, 0x009FFAC0 },
+			{ RUNTIME_VERSION_1_10_106, 0x009FFAC0 },
 			{ RUNTIME_VERSION_1_10_98, 0x009FFAC0 },
 			{ RUNTIME_VERSION_1_10_89, 0x009FFAC0 },
 			{ RUNTIME_VERSION_1_10_82, 0x009FFA60 },
@@ -419,6 +573,9 @@ void InitCWAddresses()
 		}, "48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 50 8B FA");
 	EquipItem_int = RVA <_EquipItem_int>(
 		"EquipItem_int", {
+			{ RUNTIME_VERSION_1_10_114, 0x00E1BBB0 },
+			{ RUNTIME_VERSION_1_10_111, 0x00E1BBB0 },
+			{ RUNTIME_VERSION_1_10_106, 0x00E1BBB0 },
 			{ RUNTIME_VERSION_1_10_98, 0x00E1BBB0 },
 			{ RUNTIME_VERSION_1_10_89, 0x00E1BB70 },
 			{ RUNTIME_VERSION_1_10_82, 0x00E1BB10 },
@@ -427,6 +584,9 @@ void InitCWAddresses()
 		}, "4C 8B DC 49 89 53 10 55 56 41 54 41 57");
 	UnEquipItem_int = RVA <_UnEquipItem_int>(
 		"UnEquipItem_int", {
+			{ RUNTIME_VERSION_1_10_114, 0x00E1BF90 },
+			{ RUNTIME_VERSION_1_10_111, 0x00E1BF90 },
+			{ RUNTIME_VERSION_1_10_106, 0x00E1BF90 },
 			{ RUNTIME_VERSION_1_10_98, 0x00E1BF90 },
 			{ RUNTIME_VERSION_1_10_89, 0x00E1BF50 },
 			{ RUNTIME_VERSION_1_10_82, 0x00E1BEF0 },
@@ -435,6 +595,9 @@ void InitCWAddresses()
 		}, "48 8B C4 48 89 58 18 55 57 41 56 48 83 EC 70");
 	unk_itemManager = RVA <void*>(
 		"unk_itemManager", {
+			{ RUNTIME_VERSION_1_10_114, 0x05A10618 },
+			{ RUNTIME_VERSION_1_10_111, 0x05A10618 },
+			{ RUNTIME_VERSION_1_10_106, 0x05A10618 },
 			{ RUNTIME_VERSION_1_10_98, 0x05A10618 },
 			{ RUNTIME_VERSION_1_10_89, 0x05A10618 },
 			{ RUNTIME_VERSION_1_10_82, 0x05A0F618 },
@@ -662,6 +825,7 @@ TESForm * GetFormFromIdentifier(const std::string & identifier)
 
 RelocPtr <FavoritesManagerEx*> g_favoritesManagerEx(0x05A97CE0);
 
+
 void tracePipboyPrimitiveValueInt(PipboyPrimitiveValue<SInt32>* val)
 {
 	_MESSAGE("type:     int\t\tvalue: %16i\t\thex: 0x%016I64X", val->value, val->value);
@@ -670,6 +834,11 @@ void tracePipboyPrimitiveValueInt(PipboyPrimitiveValue<SInt32>* val)
 void tracePipboyPrimitiveValueUInt(PipboyPrimitiveValue<UInt32>* val)
 {
 	_MESSAGE("type:    uint\t\tvalue: %16u\t\thex: 0x%016I64X", val->value, val->value);
+};
+
+void tracePipboyPrimitiveValueUChar(PipboyPrimitiveValue<UInt8>* val)
+{
+	_MESSAGE("type:    uchar\t\tvalue: %16u\t\thex: 0x%016I64X", val->value, val->value);
 };
 
 void tracePipboyPrimitiveValueFloat(PipboyPrimitiveValue<float>* val)
@@ -687,10 +856,29 @@ void tracePipboyPrimitiveValueBSFixedStringCS(PipboyPrimitiveValue<BSFixedString
 	_MESSAGE("type:  string\t\tvalue: %16s", val->value.c_str());
 };
 
+void tracePipboyPrimitiveThrottledValueFloat(PipboyPrimitiveThrottledValue<float>* val)
+{
+	_MESSAGE("type:   float\t\tvalue: %16f\t\thex: 0x%016I64X", val->value, val->value);
+	//DumpClass(val, 0x70 / 8);
+};
+
+void tracePipboyPrimitiveThrottledValueBool(PipboyPrimitiveThrottledValue<bool>* val)
+{
+	_MESSAGE("type:    bool\t\tvalue: %16s", val->value ? "true" : "false");
+	//DumpClass(val, 0x70/8);
+};
+
+void tracePipboyPrimitiveThrottledValueUChar(PipboyPrimitiveThrottledValue<UInt8>* val)
+{
+	_MESSAGE("type:    uchar\t\tvalue: %16u\t\thex: 0x%016I64X", val->value, val->value);
+	//DumpClass(val, 0x70 / 8);
+};
 
 void tracePipboyValue(PipboyValue* pv)
 {
+	
 	UInt64 vtbladdress = *reinterpret_cast<UInt64*>((uintptr_t)pv) - RelocationManager::s_baseAddr;
+	//_MESSAGE("%s 0x%016I64X", GetObjectClassName(pv), vtbladdress);
 	switch (vtbladdress)
 	{
 	case 0x2D545B0:	// BSFixedStringCS
@@ -699,8 +887,17 @@ void tracePipboyValue(PipboyValue* pv)
 	case 0x2D54658:	// uint
 		tracePipboyPrimitiveValueUInt((PipboyPrimitiveValue<UInt32>*)pv);
 		break;
+	case 0x2D55620:	// uchar
+		tracePipboyPrimitiveValueUChar((PipboyPrimitiveValue<UInt8>*)pv);
+		break;
+	case 0x2D55988:	// Throttled uchar
+		tracePipboyPrimitiveThrottledValueUChar((PipboyPrimitiveThrottledValue<UInt8>*)pv);
+		break;
 	case 0x2D545E8:	// bool
 		tracePipboyPrimitiveValueBool((PipboyPrimitiveValue<bool>*)pv);
+		break;
+	case 0x2D559D0:	// Throttled bool
+		tracePipboyPrimitiveThrottledValueBool((PipboyPrimitiveThrottledValue<bool>*)pv);
 		break;
 	case 0x2D54620:	// int
 		tracePipboyPrimitiveValueInt((PipboyPrimitiveValue<SInt32>*)pv);
@@ -708,11 +905,14 @@ void tracePipboyValue(PipboyValue* pv)
 	case 0x2D54690:	// float
 		tracePipboyPrimitiveValueFloat((PipboyPrimitiveValue<float>*)pv);
 		break;
+	case 0x2D55940:	// Throttled float
+		tracePipboyPrimitiveThrottledValueFloat((PipboyPrimitiveThrottledValue<float>*)pv);
+		break;
 	case 0x2D53FD8:	// PipboyArray
 		tracePipboyArray((PipboyArray*)pv);
 		break;
 	case 0x2D55B68:	// PipboyObject
-		tracePipboyObj((PipboyObject*)pv);
+		tracePipboyObject((PipboyObject*)pv);
 		break;
 	default:
 		break;
@@ -731,7 +931,7 @@ void tracePipboyArray(PipboyArray* arr)
 	gLog.Outdent();
 };
 
-void tracePipboyObj(PipboyObject* obj)
+void tracePipboyObject(PipboyObject* obj)
 {
 	_MESSAGE("type:  object");
 	gLog.Indent();
@@ -751,7 +951,7 @@ RelocAddr <_getInventoryItemByHandleID> getInventoryItemByHandleID(0x001A3650);
 BGSInventoryItem* getInventoryItemByIndex(UInt32 index)
 {
 	BSFixedString str = BSFixedString("HandleID");
-	PipboyObject::PipboyTableItem *ti = (*g_PipboyDataManager)->inventoryObjects[index]->table.Find(&str);
+	PipboyObject::PipboyTableItem *ti = (*g_PipboyDataManager)->inventoryData.inventoryObjects[index]->table.Find(&str);
 	if (ti)
 	{
 		UInt32 val = ((PipboyPrimitiveValue<UInt32>*)(ti->value))->value;
@@ -799,7 +999,7 @@ class traceGFxValue_VisitMembers : public GFxValue::ObjectInterface::ObjVisitor
 public:
 	virtual void Visit(const char * member, GFxValue * value) override
 	{
-		_MESSAGE("member name %s", member);
+		_MESSAGE("member name: \t\t%s", member);
 		traceGFxValue(value);
 	}
 };
@@ -900,3 +1100,56 @@ void traceGFxValue(GFxValue* fxv)
 		break;
 	}
 };
+
+RelocAddr <uintptr_t> s_ExtraPoisonVtbl(0x02C7C468);
+
+ExtraPoison* ExtraPoison::Create(AlchemyItem* poison)
+{
+	ExtraPoison* pPoison = (ExtraPoison*)BSExtraData::Create(sizeof(ExtraPoison), s_ExtraPoisonVtbl.GetUIntPtr());
+	pPoison->type = kExtraData_Poison;
+	pPoison->poison = poison;
+	return pPoison;
+}
+
+void DumpClassX(void * theClassPtr, UInt64 nIntsToDump)
+{
+	UInt64* basePtr = (UInt64*)theClassPtr;
+
+	_MESSAGE("DumpClassX");
+
+	gLog.Indent();
+
+	if (!theClassPtr) return;
+	for (UInt64 ix = 0; ix < nIntsToDump; ix++) {
+		UInt64* curPtr = basePtr + ix;
+		const char* curPtrName = NULL;
+		UInt64 otherPtr = 0;
+		float otherFloat1 = 0.0;
+		float otherFloat2 = 0.0;
+		const char* otherPtrName = NULL;
+		if (curPtr) {
+			curPtrName = GetObjectClassName((void*)curPtr);
+
+			__try
+			{
+				otherPtr = *curPtr;
+				UInt32 lowerFloat = otherPtr & 0xFFFFFFFF;
+				UInt32 upperFloat = (otherPtr >> 32) & 0xFFFFFFFF;
+				otherFloat1 = *(float*)&lowerFloat;
+				otherFloat2 = *(float*)&upperFloat;
+			}
+			__except (EXCEPTION_EXECUTE_HANDLER)
+			{
+				//
+			}
+
+			if (otherPtr) {
+				otherPtrName = GetObjectClassName((void*)otherPtr);
+			}
+		}
+
+		_MESSAGE("%3d +%03X ptr: 0x%016I64X: %32s *ptr: 0x%016I64x | %f, %f: %32s", ix, ix * 8, curPtr-RelocationManager::s_baseAddr, curPtrName, otherPtr, otherFloat2, otherFloat1, otherPtrName);
+	}
+
+	gLog.Outdent();
+}

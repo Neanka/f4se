@@ -51,11 +51,9 @@ namespace FindBestWeapons
 
 	inline float CheckProjectileExplosiveDamage(BGSProjectile* pj)
 	{
-		//DumpClass(pj, 0x188 / 8);
 		BGSExplosion* exp = Utils::GetOffset<BGSExplosion*>(pj, 0xE8);
 		if (exp)
 		{
-			//DumpClass(exp, 0x148 / 8);
 			_DMESSAGE("explosive damage %f", Utils::GetOffset<float>(exp, 0x120));
 			return Utils::GetOffset<float>(exp, 0x120);
 		}
@@ -222,6 +220,7 @@ namespace FindBestWeapons
 		TESObjectREFR* ref = NULL;
 
 		UInt32 * handle = commandTargetCompanionRef;
+		_MESSAGE("handle %I32u\t\thex: 0x%016I64X", handle, handle);
 
 		if (*handle != 0 && *handle != (*g_invalidRefHandle)) {
 			LookupREFRByHandle(handle, &ref);

@@ -275,7 +275,7 @@ ESH_TESContainerChangedEventSink g_ESH_TESContainerChangedEventSink;
 EventResult	ESH_TESContainerChangedEventSink::ReceiveEvent(TESContainerChangedEvent * evn, void * dispatcher)
 {
 	_DMESSAGE("ESH TESContainerChangedEvent recieved: ");
-	if (evn->sourceContainerFormID == 0x14 && evn->targetContainerFormID == 0 && evn->itemFormID == equippedExplosive.weap->formID && GetItemCount(*g_player, LookupFormByID(evn->itemFormID)) == evn->count)
+	if (equippedExplosive.weap != nullptr && evn->sourceContainerFormID == 0x14 && evn->targetContainerFormID == 0 && evn->itemFormID == equippedExplosive.weap->formID && GetItemCount(*g_player, LookupFormByID(evn->itemFormID)) == evn->count)
 	{
 		_MESSAGE("last item removed");
 		if (iEquipNext)

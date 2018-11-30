@@ -124,6 +124,9 @@ public:
                     _MESSAGE("sig: %s", rvaData->sig);
                     _MESSAGE("effective address: %p", rvaData->effectiveAddress);
                     _MESSAGE("RVA: 0x%08X", rvaData->effectiveAddress - RelocationManager::s_baseAddr);
+					_MESSAGE("			{ RUNTIME_VERSION_%d_%d_%d, 0x%08X },", GET_EXE_VERSION_MAJOR(CURRENT_RELEASE_RUNTIME),
+						GET_EXE_VERSION_MINOR(CURRENT_RELEASE_RUNTIME),
+						GET_EXE_VERSION_BUILD(CURRENT_RELEASE_RUNTIME), rvaData->effectiveAddress - RelocationManager::s_baseAddr);
                     _MESSAGE("---");
                 #endif
 

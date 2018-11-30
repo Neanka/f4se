@@ -14,12 +14,31 @@ PluginHandle			    g_pluginHandle = kPluginHandle_Invalid;
 
 F4SEScaleformInterface			* g_scaleform = nullptr;
 F4SEMessagingInterface			* g_messaging = nullptr;
-F4SEPapyrusInterface		*g_papyrus = NULL;
+F4SEPapyrusInterface			* g_papyrus = NULL;
 
+#define CA_AffinityFormID 0xA1B80
+#define CA_CurrentTresholdFormID 0xA1B81
+#define FollowerDistanceFormID 0x345
+#define FollowerStanceFormID 0x346
+#define FollowerStanceAllowCombatOverrideFormID 0x347
+#define FollowerStateFormID 0x344
 
+ActorValueInfo* CA_Affinity;
+ActorValueInfo* CA_CurrentTreshold;
+ActorValueInfo* FollowerDistance;
+ActorValueInfo* FollowerStance;
+ActorValueInfo* FollowerStanceAllowCombatOverride;
+ActorValueInfo* FollowerState;
 
-
-
+void FillConsts()
+{
+	CA_Affinity = DYNAMIC_CAST(LookupFormByID(CA_AffinityFormID), TESForm, ActorValueInfo);
+	CA_CurrentTreshold = DYNAMIC_CAST(LookupFormByID(CA_CurrentTresholdFormID), TESForm, ActorValueInfo);
+	FollowerDistance = DYNAMIC_CAST(LookupFormByID(FollowerDistanceFormID), TESForm, ActorValueInfo);
+	FollowerStance = DYNAMIC_CAST(LookupFormByID(FollowerStanceFormID), TESForm, ActorValueInfo);
+	FollowerStanceAllowCombatOverride = DYNAMIC_CAST(LookupFormByID(FollowerStanceAllowCombatOverrideFormID), TESForm, ActorValueInfo);
+	FollowerState = DYNAMIC_CAST(LookupFormByID(FollowerStateFormID), TESForm, ActorValueInfo);
+}
 
 #include "ScaleformLoader.h"
 
@@ -61,13 +80,49 @@ public:
 		case 0:
 		{
 			_DMESSAGE("ExitCommandMode");
-			CompanionListenerUnk03((*g_multiActivateManager)->unk50, 1);
+			CompanionListenerUnk03((*g_multiActivateManager)->listener1.companionListener, 1);
 		}
 		break;
 		case 1:
 		{
 			_DMESSAGE("OpenInventory");
-			CompanionListenerUnk03((*g_multiActivateManager)->unk50, 2);
+			CompanionListenerUnk03((*g_multiActivateManager)->listener1.companionListener, 2);
+		}
+		break;
+		case 2:
+		{
+			_DMESSAGE("TalkTo");
+			CompanionListenerUnk03((*g_multiActivateManager)->listener1.companionListener, 0);
+			TESObjectREFR* ref = FindBestWeapons::GetCommandTarget();
+			if (ref)
+			{
+				float fstate = 0.0;
+				fstate = ref->actorValueOwner.GetValue(FollowerState);
+				_MESSAGE("state %f", fstate);
+			}
+
+			BSExtraData* edl = ref->extraDataList->m_data;
+			while (edl)
+			{
+				_MESSAGE("%s", GetObjectClassName(edl));
+				edl = edl->next;
+			}
+
+			//_MESSAGE("state flags %i", (*g_player)->actorState.flags );
+			//_MESSAGE("flags %i", (*g_player)->actorFlags);
+			//ExtraFlags * ef = DYNAMIC_CAST((*g_player)->extraDataList->GetByType(kExtraData_Flags), BSExtraData, ExtraFlags);
+			//if (ef)
+			//{
+			//	_MESSAGE("extraflags %i", ef->flags);
+			//}
+			//_MESSAGE("actor+0x43C %i", *((UInt64*)(uintptr_t)ref+ 0x43C));
+			//DumpClass(ref, 0x440 / 8);
+			//RelocPtr <void*> yy(0x591BB80);
+			//DumpClass(*yy, 20);
+
+			//DumpClass(*g_player, 1000);
+
+
 		}
 		break;
 		default:
@@ -80,6 +135,7 @@ public:
 		_DMESSAGE("RegisterFunctions");
 		this->RegisterNativeFunction("ExitCommandMode", 0);
 		this->RegisterNativeFunction("OpenInventory", 1);
+		this->RegisterNativeFunction("TalkTo", 2);
 	}
 
 	virtual UInt32	ProcessMessage(UIMessage * msg) final
@@ -161,6 +217,7 @@ void MessageCallback(F4SEMessagingInterface::Message* msg)
 		break;
 	case F4SEMessagingInterface::kMessage_GameDataReady:
 		FindBestWeapons::FillConsts();
+		FillConsts();
 		break;
 	default:
 		break;
@@ -182,10 +239,26 @@ bool ScaleformCallback(GFxMovieView * view, GFxValue * value)
 
 #include "f4se/PapyrusVM.h"
 #include "f4se/PapyrusNativeFunctions.h"
-
+TESObjectREFR* testref = nullptr;
 bool custommenutest(StaticFunctionTag*)
 {
+	if (!testref)
+	testref = FindBestWeapons::GetCommandTarget();
+
 	_DMESSAGE("custommenutest");
+	TESObjectREFR* ref2 = nullptr;
+	//UInt32 handle = ;
+	LookupREFRByHandle((UInt32*)((uintptr_t)(*g_player) + 0xB1C), &ref2);
+	if (ref2)
+	{
+		_MESSAGE("name %s", ref2->baseForm->GetFullName());
+	}
+
+
+	DumpClass(*g_multiActivateManager, 0xE8/8);
+	DumpClass((*g_multiActivateManager)->listener1.companionListener, 0x30 / 8);
+	DumpClass((*g_multiActivateManager)->unkArray20.entries, 0x30 / 8);
+
 	//FindBestWeapons::FindBestWeapons(*g_player, false);
 	//FindBestWeapons::EquipWeapon(FindBestWeapons::rangedWeapForUI.weapToEquip, *g_player);
 
@@ -317,20 +390,6 @@ extern "C"
 
 	bool F4SEPlugin_Load(const F4SEInterface *f4se)
 	{
-/*
-		uintptr_t * disableSurvival = nullptr;
-
-		disableSurvival = Utility::pattern("0F 94 45 F7").count(1).get(0).get<uintptr_t>();
-		if (!disableSurvival)
-			_MESSAGE("Failed to find pattern for disableSurvival");
-		else
-		{
-			_MESSAGE("disableSurvival address: %p", disableSurvival);
-			UInt8 xxx[] = { 0xC6, 0x45, 0xF7, 0x00};
-			SafeWriteBuf((uintptr_t)disableSurvival, xxx, sizeof(xxx));
-			_MESSAGE("disableSurvival done");
-		}
-*/
 		logMessage("load");
 		InitCWAddresses();
 		RVAManager::UpdateAddresses(f4se->runtimeVersion);
@@ -379,54 +438,13 @@ extern "C"
 			g_branchTrampoline.Write6Branch(MultiActivateMenuProcessMessage.GetUIntPtr(), (uintptr_t)MultiActivateMenuProcessMessage_Hook);
 		}
 
-		/*{
-			struct unk12AA840_Code : Xbyak::CodeGenerator {
-				unk12AA840_Code(void * buf) : Xbyak::CodeGenerator(4096, buf)
-				{
-					Xbyak::Label retnLabel;
-
-					mov(r11,rsp);
-					mov(ptr[r11+0x10], rdx);
-					jmp(ptr[rip + retnLabel]);
-
-					L(retnLabel);
-					dq(unk12AA840.GetUIntPtr() + 7);
-				}
-			};
-
-			void * codeBuf = g_localTrampoline.StartAlloc();
-			unk12AA840_Code code(codeBuf);
-			g_localTrampoline.EndAlloc(code.getCurr());
-
-			unk12AA840_Original = (_unk12AA840)codeBuf;
-
-			//g_branchTrampoline.Write6Branch(unk12AA840.GetUIntPtr(), (uintptr_t)unk12AA840_Hook);
-		}*/
-		/*{
-			struct xx_Code : Xbyak::CodeGenerator {
-				xx_Code(void * buf) : Xbyak::CodeGenerator(4096, buf)
-				{
-					Xbyak::Label retnLabel;
-
-					mov(r11, rsp);
-					mov(ptr[r11 + 0x10], rdx);
-					jmp(ptr[rip + retnLabel]);
-
-					L(retnLabel);
-					dq(xx.GetUIntPtr() + 7);
-				}
-			};
-
-			void * codeBuf = g_localTrampoline.StartAlloc();
-			xx_Code code(codeBuf);
-			g_localTrampoline.EndAlloc(code.getCurr());
-
-			xx_Original = (_xx)codeBuf;
-
-			g_branchTrampoline.Write6Branch(xx.GetUIntPtr(), (uintptr_t)xx_Hook);
-		}*/
-
-
+		unsigned char data[] = { 0x90, 0x90, 0x90, 0x90, 0x90 };
+		//SafeWriteBuf(RelocAddr<uintptr_t>(0x9FFB36).GetUIntPtr(), &data, sizeof(data)); // hold/follow function
+		//SafeWriteBuf(RelocAddr<uintptr_t>(0xEACE86).GetUIntPtr(), &data, sizeof(data)); // hold/follow 1st function
+		//SafeWriteBuf(RelocAddr<uintptr_t>(0xEACE98).GetUIntPtr(), &data, sizeof(data)); // hold/follow 2nd function
+		//SafeWriteBuf(RelocAddr<uintptr_t>(0xEACEF9).GetUIntPtr(), &data, sizeof(data)); // hold/follow 3rd function
+		//unsigned char data2[] = { 0xC3 };
+		//SafeWriteBuf(RelocAddr<uintptr_t>(0xEAD312).GetUIntPtr(), &data2, sizeof(data2)); // hold/follow 3rd function
 
 		return true;
 	}

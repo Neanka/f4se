@@ -43,6 +43,93 @@ public:
 STATIC_ASSERT(offsetof(TESQuest, type) == 0xF7);
 */
 
+class TESObjectMISC;
+struct Component
+{
+	TESObjectMISC*		component;		// 00
+	UInt32				count;			// 08
+	UInt32				pad0C;			// 0C
+};
+
+class bhkWorldM;
+struct Workshop
+{
+	struct WorkshopModeEvent
+	{
+		TESObjectREFR*	WorkshopRef;		// 00
+		bool			start;				// 08
+	};
+	struct PowerOnEvent
+	{
+		TESObjectREFR*	ref;				// 00
+	};
+	struct PowerOffEvent
+	{
+		TESObjectREFR*	ref;				// 00
+	};
+	struct ItemGrabbedEvent
+	{
+		TESObjectREFR*	workshopRef;					// 00
+		TESObjectREFR*	objectRef;						// 08
+	};
+	struct ItemRepairedEvent
+	{
+		TESObjectREFR*	workshopRef;					// 00
+		TESObjectREFR*	objectRef;						// 08
+	};
+	struct ItemPlacedEvent
+	{
+		TESObjectREFR*	workshopRef;					// 00
+		TESObjectREFR*	objectRef;						// 08
+		NiTransform		transform;						// 10
+														//...
+	};
+	struct ItemMovedEvent
+	{
+		TESObjectREFR*	workshopRef;					// 00
+		TESObjectREFR*	objectRef;						// 08
+		UInt32          unk10[(0x50 - 0x10) / 4];       // 10
+		NiPoint3        position;						// 50
+
+	};
+	struct ItemDestroyedEvent
+	{
+		TESObjectREFR*	workshopRef;					// 00
+		TESObjectREFR*	objectRef;						// 08
+	};
+	struct BuildableAreaEvent							// sink should be added after entering workshop mode
+	{
+		UInt8			leaveArea;						// 00
+	};
+	struct ItemScrappedEvent
+	{
+		void*						unk00;				// 00
+		tArray<Component>*			components;			// 08
+	};
+	struct PlacementStatusEvent							// sink should be added after entering workshop mode
+	{
+		UInt32						flags;				// 00 flags?
+		float						unk04;				// 04 kinda Z coord?
+		bhkWorldM*					_bhkWorldM;			// 08
+		float						unk10[8];			// 10
+		TESObjectREFR*				objectRef;			// 38
+		UInt64						unk40;				// 40
+		TESObjectREFR*				workshopRef;		// 48
+		float						unk50[10];			// 50
+		NiTransform					transform;			// 70 
+	};
+};
+STATIC_ASSERT(sizeof(Workshop::PlacementStatusEvent) == 0xB0);
+
+struct PickRefUpdateEvent						//sink should be added after entering workshop mode (or when MultiActivateManager active ?)
+{
+	UInt32				targetRefHandle;		// 00
+	UInt32				unk04;					// 04 always 1?
+	TESObjectREFR*		workshopRef;			// 08
+	void*				unk10;					// 10
+	TESObjectREFR*		targetRef;				// 18
+
+};
 
 class FormsPairParameters
 {

@@ -90,11 +90,39 @@ namespace Utils {
 	}
 
 	template <typename T>
-	T Hook(T hook, uintptr_t hookTarget, int offset, int instructionLength) {
+	T Hook(T hook, uintptr_t hookTarget, int offset = 1, int instructionLength = 5) {
 		SInt32 rel32 = 0;
 		ReadMemory(hookTarget + offset, &rel32, sizeof(UInt32));
 		g_branchTrampoline.Write5Call(hookTarget, (uintptr_t)hook);
 		return reinterpret_cast<T>(hookTarget + instructionLength + rel32); // return original address
+	}
+}
+
+namespace HookUtil
+{
+	uintptr_t SafeWrite64(uintptr_t addr, uintptr_t data);
+
+	template <class Ty, class TRet, class... TArg>
+	inline auto SafeWrite64(uintptr_t jumpSrc, TRet(Ty::*fn)(TArg...)) -> decltype(fn)
+	{
+		typedef decltype(fn) Fn;
+		union
+		{
+			uintptr_t	u64;
+			Fn			fn;
+		} data;
+
+		data.fn = fn;
+
+		data.u64 = SafeWrite64(jumpSrc, data.u64);
+		return data.fn;
+	}
+
+	template <class TRet, class... TArg>
+	inline auto SafeWrite64(uintptr_t jumpSrc, TRet(*fn)(TArg...)) -> decltype(fn)
+	{
+		typedef decltype(fn) Fn;
+		return (Fn)SafeWrite64(jumpSrc, (uintptr_t)fn);
 	}
 }
 
@@ -159,6 +187,16 @@ struct PlayerAmmoCountEvent
 };
 STATIC_ASSERT(offsetof(PlayerAmmoCountEvent, weapon) == 0x10);
 
+struct PlayerWeaponReloadEvent
+{
+
+};
+
+struct PlayerSetWeaponStateEvent
+{
+
+};
+
 typedef void(*_ExecuteCommand)(const char* str);
 extern RVA <_ExecuteCommand> ExecuteCommand;
 typedef UInt8(*_HasPerk)(Actor * actor, BGSPerk * perk);
@@ -187,12 +225,6 @@ extern RVA <_SetPerkPoints_int> SetPerkPoints_int;
 typedef void(*_SetPlayerName)(void* unk1, const char* playerName);
 extern RVA <_SetPlayerName> SetPlayerName_int;
 
-typedef void(*_PlaySound)(const char* name);	// 0x012BDD10 // 48 83 EC 38 E8 ? ? ? ? 48 85 C0 74 ? 48 89 5C 24 30 
-extern RVA <_PlaySound> PlaySound_int;
-
-typedef void(*_PlaySound2)(const char* name);	// 0x012BDD80 // 48 89 5C 24 08 57 48 83 EC 50 48 8B D9 E8 ? ? ? ?
-extern RVA <_PlaySound2> PlaySound2_int;
-
 class LevelUpMenu : public GameMenuBase
 {
 public:
@@ -209,8 +241,140 @@ extern RVA <_LevelupMenuProcessMessage> LevelupMenuProcessMessage;
 typedef UInt8(*_LevelupMenuPlayPerkSound)(LevelUpMenu * menu, int formid);
 extern RVA <_LevelupMenuPlayPerkSound> LevelupMenuPlayPerkSound;	// 0x0B39750 // 48 89 5C 24 08 57 48 83 EC 30 48 8B F9 8B CA 33 DB E8 ? ? ? ? 48 85 C0 74 ? 80 78 1A 5F 75 ? 48 8B 98 88 00 00 00 48 81 C7 80 01 00 00 
 
-typedef UInt8(*_LevelupMenuStopPerkSound)(SInt32 unk1);		// unk1 is LevelUpMenu+0x180
+typedef UInt8(*_LevelupMenuStopPerkSound)(SInt32* unk1);		// unk1 is LevelUpMenu+0x180
 extern RVA <_LevelupMenuStopPerkSound> LevelupMenuStopPerkSound;	// 0x01AC7B70 // 40 53 48 83 EC 20 8B 19 83 FB FF 74 ? C6 41 05 02
+
+typedef TESForm*(*_GetSoundByName)(const char* name);
+extern RVA <_GetSoundByName> GetSoundByName; // 40 53 48 83 EC 20 E8 ?? ?? ?? ?? 48 8B D8 33 C0
+
+
+typedef void(*_LevelupMenuPlaySound_funk1)(void* param1, SInt32* param2, void* param3, void** param4, int param5, void** param6);
+extern RVA <_LevelupMenuPlaySound_funk1> LevelupMenuPlaySound_funk1; //48 8B C4 48 89 58 08 48 89 68 10 48 89 70 18 57 41 54 41 55 41 56 41 57 48 81 EC A0 00 00 00 44 8B 0D ? ? ? ?
+
+typedef void(*_LevelupMenuPlaySound_funk2)(SInt32* param1);
+extern RVA <_LevelupMenuPlaySound_funk2> LevelupMenuPlaySound_funk2; //40 53 48 83 EC 20 8B 19 83 FB FF 74 ? C6 41 05 01
+
+extern RVA <void*> LevelupMenuPlaySound_var1;
+
+#include "NiNodes.h"
+// 50
+struct WorkshopEntry
+{
+	BGSKeyword*					kwd;
+	WorkshopEntry*				parent;
+	tArray<WorkshopEntry*>		entries; // children
+	BGSConstructibleObject*		recipe;
+	void*						unk30;
+	TESForm*					object;
+	UInt16						unk40;
+	UInt16						unk42;
+	UInt16						unk44;
+	UInt16						unk46;
+	UInt8						selected;
+	UInt8						pad49[7];
+};
+STATIC_ASSERT(sizeof(WorkshopEntry) == 0x50);
+
+class Inventory3DManager : public BSInputEventUser
+{
+	UInt32			unk10; // flags
+	float			unk14;
+	float			unk18;
+	float			unk1C;
+	void* unk20[36];
+};
+STATIC_ASSERT(sizeof(Inventory3DManager) == 0x140);
+
+class SimpleAnimationGraphManagerHolder : public IAnimationGraphManagerHolder
+{
+	void*	unk08;
+	void*	unk10;
+};
+
+// 30
+class WorkshopMenuGeometry : SimpleAnimationGraphManagerHolder
+{
+public:
+	UInt32			unk18;
+	UInt32			unk1C;
+	BSFadeNode*		unk20;
+	NiNode*			unk28;
+};
+
+
+class WorkshopMenu : public GameMenuBase
+{
+public:
+	BSTEventSink<UserEventEnabledEvent>							sinkE0;
+	BSTEventSink<Workshop::BuildableAreaEvent>					sinkE8;
+	BSTEventSink<PickRefUpdateEvent>							sinkF0;
+	BSTEventSink<Workshop::PlacementStatusEvent>				sinkF8;
+
+	tArray<NiPoint3>			unkArray100; // 100 filled in menu ctor
+	tArray<NiPoint3>			unkArray118; // 118 filled in menu ctor
+	tArray<NiPoint3>			unkArray130; // 130 filled in menu ctor
+	tArray<NiPoint3>			unkArray148; // 148 filled in menu ctor
+
+	struct unkArray160struct
+	{
+		TESBoundObject*			object1;
+		TESBoundObject*			object2;
+		BSFadeNode*				fadeNode;
+		void*					unk18[9];
+	};
+	STATIC_ASSERT(sizeof(unkArray160struct) == 0x60);
+
+	tArray<unkArray160struct>				unkArray160; // 160 
+	tArray<void*>							unkArray178; // 178 always empty
+	tArray<NiMatrix43>						unkArray190; // 190 a bunch of floats, NiMatrix43 probably
+
+	UInt32					unk1A8;
+	UInt32					unk1AC;
+	Inventory3DManager		inventory3DManager; // 1B0
+	tArray<void*>			unkArray2F0;
+	void*					unk308[15];
+	WorkshopMenuGeometry*	workshopMenuGeometry; // 380
+	BSFixedString			lastControl; //388
+	BGSListForm				unkListForm390; // 390
+	BGSListForm				unkListForm3D8; // 3D8
+	float					unk420; // if >= 1.0 ShowHUDMessage "Nothing more can be built."
+	float					unk424;
+	void*					unk428;
+	bool					shiftPressed; //430 AlternateControlsKey pressed
+	bool					unk431;
+	bool					unk432;
+	// 1E8
+	class FXWorkshopMenu : public BSGFxShaderFXTarget
+	{
+
+	};
+	FXWorkshopMenu*			fXWorkshopMenu; // 438
+};
+STATIC_ASSERT(sizeof(WorkshopMenu) == 0x440);
+
+#define WSM_SIG "C6 40 48 01 48 8B 1D"
+
+extern RVA  <WorkshopEntry*> g_rootWorkshopEntry;
+extern RVA  <UInt16> g_workshopDepth;
+
+typedef WorkshopEntry*(*_GetSelectedWorkshopEntry)(UInt16 depth, UInt16 *resultIndex);
+extern RVA  <_GetSelectedWorkshopEntry> GetSelectedWorkshopEntry;
+
+typedef bool(*_WM_Up)(void* menu);
+extern RVA <_WM_Up> WM_Up;
+
+// 48 8B C4 55 41 56 41 57 48 8D A8 28 FF FF FF 
+typedef bool(*_OnWorkshopMenuButtonEvent)(BSInputEventUser* eu, ButtonEvent * inputEvent);
+extern RVA <_OnWorkshopMenuButtonEvent> OnWorkshopMenuButtonEvent;
+
+// 48 89 5C 24 08 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 70 FF FF FF
+typedef void(*_WorkshopMenuProcessMessage)(WorkshopMenu* menu, UIMessage * message);
+extern RVA <_WorkshopMenuProcessMessage> WorkshopMenuProcessMessage;
+
+#define WSM_SIG1 "4C 89 7C 24 60 44 89 A4 24 98 00 00 00"
+extern RVA <uintptr_t> wsm_firstAddress;
+extern RVA <uintptr_t> wsm_secondAddress;
+
 
 //sexchange internal functions 
 
@@ -269,23 +433,48 @@ class MultiActivateMenu : public GameMenuBase
 typedef UInt32(*_MultiActivateMenuProcessMessage)(MultiActivateMenu * menu, UIMessage * message);
 extern RVA <_MultiActivateMenuProcessMessage> MultiActivateMenuProcessMessage;
 
+// 0x30
+class CompanionListener;
+class ActivateChoiceListener;
+
+
+//E8 ?
 class MultiActivateManager
 {
 public:
 	virtual ~MultiActivateManager();
 
+	struct ListenerStruct
+	{
+		void*	unk00;
+		UInt16	unk08;
+		UInt16	unk0A;
+		UInt32	pad0C;
+		CompanionListener*	companionListener; // 10
+		UInt32	unk18;
+		UInt32	unk1C;
+	};
+	STATIC_ASSERT(sizeof(ListenerStruct) == 0x20);
+	
 	// void ** _vtbl;    // 00
-	void*		unk08; // 08
-	void*		unk10; // 10
-	void*		unk18; // 
-	void*		unk20; // 
-	void*		unk28; // 
-	void*		unk30; // 
-	void*		unk38; // 
-	void*		unk40; // 
-	void*		unk48; // 
-	void*		unk50; // 
+	BSTEventSink<PickRefUpdateEvent>		sink1; // 08
+	UInt32									unk10;
+	BSReadWriteLock							locker; // 14
+	UInt32									unk1C;
+	tArray<void*>							unkArray20;	// 20
+	UInt32									unk38; // init as 0x80000000
+	UInt32									unk3C; // 
+	ListenerStruct							listener1;
+	ListenerStruct							listener2;
+	ListenerStruct							listener3;
+	ListenerStruct							listener4;
+	void*		unkC0; // 
+	void*		unkC8; // BSTValueEventSource<MultiActivateUseRolloverEvent>::`vftable'
+	void*		unkD0; // 
+	void*		unkD8; // 
+	void*		unkE0; // 
 };
+STATIC_ASSERT(sizeof(MultiActivateManager) == 0xE8);
 
 extern RVA <MultiActivateManager*> g_multiActivateManager;
 
@@ -346,7 +535,7 @@ extern RVA <_UnEquipItem_int> UnEquipItem_int;
 
 extern RVA <void*> unk_itemManager;
 
-
+void InitWSMAddresses();
 
 void InitExeAddress();
 
@@ -385,6 +574,7 @@ void UI_AddMessage_int(BSFixedString asMenuName, int state);
 void pauseGame(bool pause);
 
 BSTEventDispatcher<void*>* GetGlobalEventDispatcher(BSTGlobalEvent* globalEvents, const char * dispatcherName);
+#define GET_EVENT_DISPATCHER(EventName) (BSTEventDispatcher<EventName>*) GetGlobalEventDispatcher(*g_globalEvents, #EventName);
 
 void logMessage(std::string aString);
 
@@ -573,10 +763,184 @@ struct PlayerCrosshairModeEvent
 	UInt32				mode;			// 00 
 };
 
+struct TravelMarkerStateChange
+{
+	struct Event
+	{
+
+	};
+};
+
+struct BGSActorCellEvent
+{
+
+};
+
+struct TESQuestEvent
+{
+	struct Event
+	{
+
+	};
+};
+
+struct PlayerCharacterQuestEvent
+{
+	struct Event
+	{
+
+	};
+};
+
+struct CustomMarkerUpdate
+{
+	struct Event
+	{
+
+	};
+};
+
+struct LocationMarkerArrayUpdate
+{
+	struct Event
+	{
+
+	};
+};
+
+struct LocalMapCameraUpdate
+{
+	struct Event
+	{
+
+	};
+};
+
+struct TESLocationClearedEvent
+{
+
+};
+
+struct ActorValueEvents
+{
+	struct ActorValueChangedEvent
+	{
+
+	};
+};
+	
+struct RadioManager
+{
+	struct PipboyFrequencyDetectionEvent
+	{
+
+	};
+	struct PipboyRadioTuningEvent
+	{
+
+	};
+};
+
+struct ActorEquipManagerEvent
+{
+	struct Event
+	{
+
+	};
+};
 
 
+struct PerkPointIncreaseEvent
+{
 
+};
 
+struct PerkValueEvents
+{
+	struct PerkEntryUpdatedEvent
+	{
+
+	};
+};
+
+struct HourPassed
+{
+	struct Event
+	{
+
+	};
+};
+
+struct SPECIALMenuEvent
+{
+	struct NameChangedEvent
+	{
+
+	};
+};
+
+struct PlayerUpdateEvent
+{
+
+};
+
+struct BGSInventoryItemEvent
+{
+	struct Event
+	{
+
+	};
+};
+
+struct PlayerActiveEffectChanged
+{
+	struct Event
+	{
+
+	};
+};
+
+struct PlayerDifficultySettingChanged
+{
+	struct Event
+	{
+
+	};
+};
+
+struct PlayerLifeStateChanged
+{
+	struct Event
+	{
+
+	};
+};
+
+struct PlayerInDialogueChanged
+{
+	struct Event
+	{
+
+	};
+};
+
+struct LoadingStatusChanged
+{
+	struct Event
+	{
+
+	};
+};
+
+struct VATSEvents
+{
+	struct ModeChange
+	{
+
+	};
+};
+
+/*
 class PipboyDataGroup
 {
 public:
@@ -585,39 +949,8 @@ public:
 	BSTEventSource<PipboyValueChangedEvent>			pipboyValueChangedEventSource;		// 08
 };
 //STATIC_ASSERT(sizeof(PipboyDataGroup) == 0x78);
+*/
 
-
-struct marker
-{
-	UInt32    arrayIndex;    // 00
-	UInt32    handle;    // 04
-
-	bool operator==(const UInt32 a_key) const { return arrayIndex == a_key; }
-	static inline UInt32 GetHash(UInt32 * key)
-	{
-		UInt32 hash;
-		CalculateCRC32_32(&hash, *key, 0);
-		return hash;
-	}
-
-	void Dump(void)
-	{
-		_MESSAGE("\t\thandle: %08X", handle);
-		_MESSAGE("\t\tarrayIndex: %08X", arrayIndex);
-	}
-};
-
-
-class PipboyMapData
-{
-public:
-	virtual ~PipboyMapData();
-	void*			unk00[35];
-	//void*			unk148;
-	tHashSet<marker, UInt32>		markers;
-	void*			unk150[29];
-};
-STATIC_ASSERT(sizeof(PipboyMapData) == 0x238);
 
 /* added in f4se 0.6.7
 // 18 
@@ -683,6 +1016,24 @@ public:
 STATIC_ASSERT(offsetof(PipboyObject, table) == 0x18);
 */
 
+template <class T>
+class PipboyPrimitiveThrottledValue : public PipboyPrimitiveValue<T>
+{
+public:
+
+	void* unk20;
+	void* unk28;
+	T value1;
+	void* unk38;
+	void* unk40;
+	void* unk48;
+	void* unk50;
+	void* unk58;
+	void* unk60;
+	void* unk68;
+};
+STATIC_ASSERT(sizeof(PipboyPrimitiveThrottledValue<bool>) == 0x70);
+
 class PipboyArray : public PipboyValue
 {
 public:
@@ -690,15 +1041,6 @@ public:
 	tArray<PipboyValue*>				value;		// 18
 };
 STATIC_ASSERT(sizeof(PipboyArray) == 0x30);
-
-
-struct PipboyDataManager {
-	UInt64								unk00[0x4A8 / 8];					// 00
-	tArray<PipboyObject*>				inventoryObjects;				// 4A8
-	UInt64								unk4C0[102];			// 4C0
-	PipboyMapData						mapData;				// 7F0
-};
-STATIC_ASSERT(sizeof(PipboyDataManager) == 0xA28);
 
 void tracePipboyPrimitiveValueInt(PipboyPrimitiveValue<SInt32>* val);
 
@@ -711,8 +1053,367 @@ void tracePipboyPrimitiveValueBool(PipboyPrimitiveValue<bool>* val);
 void tracePipboyPrimitiveValueBSFixedStringCS(PipboyPrimitiveValue<BSFixedString>* val);
 
 void tracePipboyArray(PipboyArray* arr);
-void tracePipboyObj(PipboyObject* obj);
+void tracePipboyObject(PipboyObject* obj);
 void tracePipboyValue(PipboyValue* pv);
+
+class PipboyDataGroup
+{
+	void*						vtable;	// 0x00
+	void*						unk08[0x88/8];
+	PipboyObject*				object; // 0x90
+};
+STATIC_ASSERT(sizeof(PipboyDataGroup) == 0x98);
+
+class PipboyStatsData : public PipboyDataGroup
+{
+public:
+	void*			unk98[20];
+};
+STATIC_ASSERT(sizeof(PipboyStatsData) == 0x138);
+
+class PipboySpecialData : public PipboyDataGroup
+{
+public:
+	void*			unk98[2];
+};
+STATIC_ASSERT(sizeof(PipboySpecialData) == 0xA8);
+
+class PipboyPerksData : public PipboyDataGroup
+{
+public:
+	void*			unk98[8];
+};
+STATIC_ASSERT(sizeof(PipboyPerksData) == 0xD8);
+
+class PipboyInventoryData: public PipboyDataGroup
+{
+public:
+	
+	void*			unk98[23];
+	tArray<PipboyObject*>				inventoryObjects;				// 150
+	void*			unk168[6];
+
+};
+STATIC_ASSERT(sizeof(PipboyInventoryData) == 0x198);
+
+class PipboyQuestData : public PipboyDataGroup
+{
+public:
+	void*			unk98[10];
+};
+STATIC_ASSERT(sizeof(PipboyQuestData) == 0xE8);
+
+class PipboyWorkshopData : public PipboyDataGroup
+{
+public:
+	void*			unk98[21];
+};
+STATIC_ASSERT(sizeof(PipboyWorkshopData) == 0x140);
+
+class PipboyLogData : public PipboyDataGroup
+{
+public:
+	void*			unk98[8];
+};
+STATIC_ASSERT(sizeof(PipboyLogData) == 0xD8);
+
+// 0x238
+class PipboyMapData : public PipboyDataGroup
+{
+public:
+	BSTEventSink<TravelMarkerStateChange::Event>			es1;
+	BSTEventSink<PlayerUpdateEvent>							es2;
+	BSTEventSink<BGSActorCellEvent>							es3;
+	BSTEventSink<TESQuestEvent::Event>						es4;
+	BSTEventSink<PlayerCharacterQuestEvent::Event>			es5;
+	BSTEventSink<CustomMarkerUpdate::Event>					es6;
+	BSTEventSink<LocationMarkerArrayUpdate::Event>			es7;
+	BSTEventSink<LocalMapCameraUpdate::Event>				es8;
+	BSTEventSink<TESLocationClearedEvent>					es9;
+	BSTEventSink<ActorValueEvents::ActorValueChangedEvent>	es10;
+	PipboyObject*											mapDataObject;	// always same as 0x90
+	/*
+	object with fields:
+	CurrCell (string)
+	CurrWorldspace (string)
+	World (object)
+		Player (object) 
+			Y
+			Rotation
+			X
+		Custom (object)
+			Height
+			Y (float)
+			Visible (bool)
+			X (float)
+		PowerArmor (object)
+			Height
+			Y (float)
+			Visible (bool)
+			X (float)
+		Quests (array of objects)
+			Height
+			Y
+			OnDoor (bool)
+			Name
+			Shared
+			QuestId (array of uints)
+			X
+		Locations (array of objects)
+			Y (float)
+			Discovered (bool)
+			LocationMarkerFormId (uint)
+			X (float)
+			ClearedStatus (bool)
+			Name (string)
+			LocationFormId (uint)
+			Visible (bool)
+			type (uint)
+		Extents (object)
+			SWX (float)
+			NEY (float)
+			NWX (float)
+			NEX (float)
+			NWY (float)
+			SWY (float)
+		WorldMapTexture (string)
+		Local (object)
+			Player (object)
+				Y
+				Rotation
+				X
+			Custom (object)
+				Height
+				Y (float)
+				Visible (bool)
+				X (float)
+			PowerArmor (object)
+				Height
+				Y (float)
+				Visible (bool)
+				X (float)
+			Doors (array of objects)
+				Y (float)
+				Name
+				Visible (bool)
+				X (float)
+			Quests (array of objects)
+				Height
+				Y
+				OnDoor (bool)
+				Name
+				Shared
+				QuestId (array of uints)
+				X
+			Extents (object)
+				SWX (float)
+				NEY (float)
+				NWX (float)
+				NEX (float)
+				NWY (float)
+				SWY (float)
+	*/
+	struct MarkerInfo
+	{
+		TESFullName*    name;    // 00
+		PipboyObject*    obj;    // 08
+
+		/*
+		object with fields:
+
+		Discovered (bool)
+		type (uint)
+		X (float)
+		Y (float)
+		Name (string)
+		LocationFormId (uint)
+		LocationMarkerFormId (uint)
+		Visible (bool)
+		ClearedStatus (bool)
+
+		WorkshopOwned (bool) optional
+		WorkshopPopulation (uint) optional
+		WorkshopHappinessPct (float) optional
+
+		*/
+
+		bool operator==(const BSFixedString a_key) const { return name->name.data == a_key.data; }
+		static inline UInt32 GetHash(const BSFixedString * key)
+		{
+			UInt32 hash;
+			CalculateCRC32_64(&hash, (UInt64)key->data->Get<char>(), 0);
+			return hash;
+		}
+
+		void Dump(void)
+		{
+			_MESSAGE("fullname: %s", name->name.c_str());
+			tracePipboyObject(obj);
+		}
+	};
+	tHashSet<MarkerInfo, TESFullName*>		markersInfo;
+
+	struct marker
+	{
+		UInt32    arrayIndex;    // 00
+		UInt32    handle;    // 04
+
+		bool operator==(const UInt32 a_key) const { return arrayIndex == a_key; }
+		static inline UInt32 GetHash(UInt32 * key)
+		{
+			UInt32 hash;
+			CalculateCRC32_32(&hash, *key, 0);
+			return hash;
+		}
+
+		void Dump(void)
+		{
+			_MESSAGE("\t\thandle: %08X", handle);
+			_MESSAGE("\t\tarrayIndex: %08X", arrayIndex);
+		}
+	};
+	tHashSet<marker, UInt32>		markers;
+	tArray<PipboyObject*>			unkarr1;
+	tArray<UInt32>					unkarr2;	// array of handles?
+	struct unkstr2
+	{
+		UInt32				handle;	// 00
+		UInt32				pad04;	// 04
+		PipboyObject*		obj;    // 08
+
+		void Dump(void)
+		{
+			_MESSAGE("\t\thandle: %08X", handle);
+			tracePipboyValue(obj);
+		}
+	};
+	tHashSet<unkstr2, UInt32>			unkhs1;
+	tHashSet<unkstr2, UInt32>			unkhs2;	// looks like just copy of unkhs1
+	NiPoint3						playerPos[2];
+	PipboyObject*					unkPos1; // object with fields X (float) Y (float) and Rotation (float)
+	PipboyObject*					unkPos2; // object with fields X (float) Y (float) and Rotation (float)
+	PipboyObject*					unkMarker1; // probably custom marker. object with fields X (float) Y (float) Visible (bool) and Height (uchar)
+	PipboyObject*					unkMarker2; // probably custom marker. object with fields X (float) Y (float) Visible (bool) and Height (uchar)
+	PipboyObject*					unkMarker3; // probably PA marker. object with fields X (float) Y (float) Visible (bool) and Height (uchar)
+	PipboyObject*					unkMarker4; // probably PA marker. object with fields X (float) Y (float) Visible (bool) and Height (uchar)
+	PipboyObject*					unkExtents1; // object with fields SWX(float) NEY(float) NWX(float) NEX(float) NWY(float) SWY(float)
+	PipboyObject*					unkExtents2; // object with fields SWX(float) NEY(float) NWX(float) NEX(float) NWY(float) SWY(float)
+
+};
+STATIC_ASSERT(sizeof(PipboyMapData) == 0x238);
+
+class PipboyRadioData : public PipboyDataGroup
+{
+public:
+	BSTEventSink<RadioManager::PipboyFrequencyDetectionEvent>		es1;
+	BSTEventSink<RadioManager::PipboyRadioTuningEvent>				es2;
+	PipboyArray*													radioDataObject;	// always same as 0x90
+	/*
+	array of radiostations objects with fields:
+	active (bool)
+	frequency (float)
+	text (string)
+	inRange (bool)
+	*/
+};
+STATIC_ASSERT(sizeof(PipboyRadioData) == 0xB0);
+
+class PipboyPlayerInfoData : public PipboyDataGroup
+{
+public:
+	BSTEventSink<ActorValueEvents::ActorValueChangedEvent>			es1;
+	BSTEventSink<BGSInventoryListEvent::Event>						es2;
+	BSTEventSink<ActorEquipManagerEvent::Event>						es3;
+	BSTEventSink<LevelIncrease::Event>								es4;
+	BSTEventSink<PerkPointIncreaseEvent>							es5;
+	BSTEventSink<PerkValueEvents::PerkEntryUpdatedEvent>			es6;
+	BSTEventSink<HourPassed::Event>									es7;
+	BSTEventSink<SPECIALMenuEvent::NameChangedEvent>				es8;
+	BSTEventSink<PlayerUpdateEvent>									es9;
+	BSTEventSink<BGSInventoryItemEvent::Event>						es10;
+	BSTEventSink<PlayerActiveEffectChanged::Event>					es11;
+	BSTEventSink<PlayerCharacterQuestEvent::Event>					es12;
+	BSTEventSink<PlayerDifficultySettingChanged::Event>				es13;
+	PipboyObject*													playerInfoDataObject;	// always same as 0x90
+	/*
+	object with fields:
+	CurrWeight (float)
+	DateYear (uint)
+	PerkPoints (uint)
+	Caps (sint)
+	MaxWeight (float)
+	CurrHP
+	MaxAP
+	CurrAP
+	MaxHP
+	SlotResists (array of arrays of objects) 
+			Value (float)
+			type (uint)
+	CurrentHPGain (float)
+	TotalDamages (array of objects)
+		Value (float)
+		type (uint)
+	TotalResists (array of objects)
+		Value (float)
+		type (uint)
+	TimeHour (float)
+	DateDay
+	DateMonth (uint)
+	XPLevel (sint)
+	PlayerName (string)
+	XPProgressPct (float)
+	*/
+
+};
+STATIC_ASSERT(sizeof(PipboyPlayerInfoData) == 0x108);
+
+class PipboyStatusData : public PipboyDataGroup
+{
+public:
+	BSTEventSink<PlayerLifeStateChanged::Event>			es1;
+	BSTEventSink<PlayerInDialogueChanged::Event>		es2;
+	BSTEventSink<MenuOpenCloseEvent>					es3;
+	BSTEventSink<BGSInventoryListEvent::Event>			es4;
+	BSTEventSink<LoadingStatusChanged::Event>			es5;
+	BSTEventSink<VATSEvents::ModeChange>				es6;
+	BSTEventSink<UserEventEnabledEvent>					es7;
+	PipboyObject*										statusDataObject;	// always same as 0x90
+	/*
+	object with fields:
+	IsInAnimation (bool)
+	IsPipboyNotEquipped (bool)
+	IsInVats (bool)
+	IsPlayerPipboyLocked (bool)
+	MinigameFormIds (array of uints)
+	IsInAutoVanity (bool)
+	IsPlayerMovementLocked (bool)
+	EffectColor (array of float RGB)
+	IsDataUnavailable (bool)
+	IsMenuOpen (bool)
+	IsPlayerDead (bool)
+	IsInVatsPlayback (bool)
+	IsPlayerInDialogue (bool)
+	IsLoading (bool)
+	*/
+	PipboyArray*										unkD8;	// probably effectColor
+};
+STATIC_ASSERT(sizeof(PipboyStatusData) == 0xE0);
+
+struct PipboyDataManager {
+	UInt64								unk00[0xA0 / 8];					// 00
+	PipboyStatsData						statsData;							// A0
+	PipboySpecialData					specialData;						// 1D8
+	PipboyPerksData						perksData;							// 280
+	PipboyInventoryData					inventoryData;						// 358
+	PipboyQuestData						questData;							// 4F0
+	PipboyWorkshopData					workshopData;						// 5D8
+	PipboyLogData						logData;							// 718
+	PipboyMapData						mapData;							// 7F0
+	PipboyRadioData						radioData;							// A28
+	PipboyPlayerInfoData				playerInfoData;						// AD8
+	PipboyStatusData					statusData;							// BE0
+};
+STATIC_ASSERT(sizeof(PipboyDataManager) == 0xCC0);
 
 extern RelocPtr <void*> g_itemMenuDataMgr;
 
@@ -814,6 +1515,7 @@ struct  justPointer
 	justPointer*			unk10;
 	justPointer*			unk18;
 };
+
 class BGSMessage : public TESForm
 {
 public:
@@ -928,7 +1630,7 @@ public:
 	General				general;	// 20
 };
 
-
+/* added in f4se 0.6.11
 class TESQuest_x;
 
 
@@ -960,7 +1662,7 @@ class BGSRefCollectionAlias : public BGSRefAlias
 public:
 	void*				unk48;
 };
-
+*/
 
 /* added in f4se 0.6.7
 // 20
@@ -1017,15 +1719,18 @@ public:
 }; 
 */
 
+class TESPackage;
 // 38
 class ExtraAliasInstanceArray : public BSExtraData
 {
 public:
+	enum { kExtraTypeID = kExtraData_AliasInstanceArray };
+
 	struct Entry
 	{
 		TESQuest*			quest;
 		BGSRefAlias*		alias;
-		void*				unk10;
+		tArray<TESPackage*>	* packages; // ??? got from skse
 	};
 	tArray<Entry>		unk18;		// 18
 	void*				unk30;		// 30
@@ -1160,3 +1865,120 @@ refenable(ref, false);
 }
 }
 */
+
+// 28
+class ExtraPoison : public BSExtraData
+{
+public:
+	enum { kExtraTypeID = kExtraData_Poison};
+
+	UInt64			unk18;		// 18
+	AlchemyItem*	poison;		// 20
+	
+	static ExtraPoison* Create(AlchemyItem* poison);
+};
+STATIC_ASSERT(sizeof(ExtraPoison) == 0x28);
+
+class ExtraReferenceHandle : public BSExtraData
+{
+public:
+	enum { kExtraTypeID = kExtraData_ReferenceHandle };
+
+	UInt32	handle;		// 18
+
+};
+
+
+// 38
+class ExtraLinkedRefChildren : public BSExtraData
+{
+public:
+
+	struct Child
+	{
+		BGSKeyword*			kwd;
+		UInt32				handle;
+		UInt32				pad0C;
+	};
+	UInt32		unk18;
+	UInt32		pad1C;
+	union
+	{
+		Child				one;
+		Child*				many;
+	} children;
+	UInt32		count;
+	UInt32		pad34;
+
+};
+STATIC_ASSERT(sizeof(ExtraLinkedRefChildren) == 0x38);
+
+
+// 0x30
+class BSUIMessageData : public UIMessage
+{
+	void* unk18;
+	void* unk20;
+	UInt32 unk28;
+};
+STATIC_ASSERT(sizeof(BSUIMessageData) == 0x30);
+
+// 0x20
+class BSUIScaleformData : public UIMessage
+{
+	void* unk18;
+};
+STATIC_ASSERT(sizeof(BSUIScaleformData) == 0x20);
+
+// 0x28
+class InventoryUpdateData : public UIMessage
+{
+	UInt32	unk18;
+	void*	unk20;
+};
+STATIC_ASSERT(sizeof(InventoryUpdateData) == 0x28);
+
+//struct ObjectInstanceData
+//{
+//	TESForm						* form;
+//	TBO_InstanceData			* data;
+//};
+//using _CalcInstanceData = ObjectInstanceData * (*)(ObjectInstanceData & out, TESForm *, TBO_InstanceData *);
+//extern RelocAddr<_CalcInstanceData>		CalcInstanceData;
+//48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 20 48 89 11 49 8B F8
+
+void DumpClassX(void * theClassPtr, UInt64 nIntsToDump);
+
+template <typename T>
+class BSTValueEventSink : public BSTEventSink<T>
+{
+public:
+	UInt32		unk00;
+	UInt32		unk08;
+	UInt32		unk10;
+	UInt32		unk18;
+};
+
+// 0x230
+class HUDAmmoCounter : public HUDComponentBase
+{
+public:
+	BSGFxDisplayObject								ClipCount_tf;		// F8
+	BSGFxDisplayObject								ReserveCount_tf;	// 148
+	UInt32											ClipCount;			// 198
+	UInt32											unk19C;				// 19C init as byte = 0
+	UInt32											ReserveCount;		// 1A0
+	UInt32											unk1A4;				// 1A4 init as byte = 0
+	UInt32											unk1A8;				// 1A8
+	UInt32											unk1AC;				// 1AC init as byte = 0
+	UInt32											unk1B0;				// 1B0
+	UInt32											unk1B4;				// 1B4 init as byte = 0
+	BSTValueEventSink<PlayerAmmoCountEvent>			ves1;				// 1B8
+	UInt64											unk1D0;
+	BSTValueEventSink<PlayerWeaponReloadEvent>		ves2;				// 1D8
+	BSTValueEventSink<PlayerCrosshairModeEvent>		ves3;				// 1F0
+	UInt64											unk208;
+	BSTValueEventSink<PlayerSetWeaponStateEvent>	ves4;				// 210
+	UInt64											unk228;
+};
+STATIC_ASSERT(sizeof(HUDAmmoCounter) == 0x230);

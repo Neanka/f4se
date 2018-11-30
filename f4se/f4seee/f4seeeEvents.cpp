@@ -366,6 +366,9 @@ void LevelIncrease__Event_Dispatcher_Init()
 {
 	LevelIncrease__Event_Dispatcher_address = RVA <BSTEventDispatcher<LevelIncrease::Event>*>(
 		"LevelIncrease__Event_Dispatcher_address", {
+			{ RUNTIME_VERSION_1_10_114, 0x00EC3020 },
+			{ RUNTIME_VERSION_1_10_111, 0x00EC3020 },
+			{ RUNTIME_VERSION_1_10_106, 0x00EC3020 },
 			{ RUNTIME_VERSION_1_10_98, 0x00EC3020 },
 			{ RUNTIME_VERSION_1_10_89, 0x00EC2FE0 },
 			{ RUNTIME_VERSION_1_10_82, 0x00EC2F80 },
@@ -620,6 +623,9 @@ void TESContainerChangedEvent_Dispatcher_Init()
 {
 	TESContainerChangedEvent_Dispatcher_address = RVA <BSTEventDispatcher<TESContainerChangedEvent>*>(
 		"TESContainerChangedEvent_Dispatcher_address", {
+			{ RUNTIME_VERSION_1_10_114, 0x00442390 },
+			{ RUNTIME_VERSION_1_10_111, 0x00442390 },
+			{ RUNTIME_VERSION_1_10_106, 0x00442390 },
 			{ RUNTIME_VERSION_1_10_98, 0x00442390 },
 			{ RUNTIME_VERSION_1_10_89, 0x00442390 },
 		}, InventoryEventHandler_EVENTS_REG_SIG, InventoryEventHandler_INDIRECTIONS(0x1D));
@@ -645,6 +651,9 @@ void TESEquipEvent_Dispatcher_Init()
 {
 	TESEquipEvent_Dispatcher_address = RVA <BSTEventDispatcher<TESEquipEvent>*>(
 		"TESEquipEvent_Dispatcher_address", {
+			{ RUNTIME_VERSION_1_10_114, 0x00442750 },
+			{ RUNTIME_VERSION_1_10_111, 0x00442750 },
+			{ RUNTIME_VERSION_1_10_106, 0x00442750 },
 			{ RUNTIME_VERSION_1_10_98, 0x00442750 },
 			{ RUNTIME_VERSION_1_10_89, 0x00442750 },
 		}, InventoryEventHandler_EVENTS_REG_SIG, InventoryEventHandler_INDIRECTIONS(0x2E));

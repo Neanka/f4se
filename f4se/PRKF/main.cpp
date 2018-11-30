@@ -771,6 +771,38 @@ public:
 	}
 };
 
+class Scaleform_PlayPerkSoundByName : public GFxFunctionHandler
+{
+public:
+
+
+	virtual void	Invoke(Args * args) {
+		if (args->args[0].GetType() != GFxValue::kType_String) return;
+		LevelUpMenu* menu = DYNAMIC_CAST((*g_ui)->GetMenu(BSFixedString("LevelUpMenu")), IMenu, LevelUpMenu);
+		if (!menu) return;
+		LevelupMenuStopPerkSound(&menu->unk180);
+		TESForm* ff = GetSoundByName(args->args[0].GetString());
+		if (ff && ff->formType == kFormType_SNDR)
+		{
+			LevelupMenuPlaySound_funk1(*LevelupMenuPlaySound_var1, &menu->unk180, &((BGSSoundDescriptorForm*)ff)->soundDescriptor, 0, 0x10, 0);
+			LevelupMenuPlaySound_funk2(&menu->unk180);
+		}
+		
+	}
+};
+
+class Scaleform_StopPerkSound : public GFxFunctionHandler
+{
+public:
+
+
+	virtual void	Invoke(Args * args) {
+		LevelUpMenu* menu = DYNAMIC_CAST((*g_ui)->GetMenu(BSFixedString("LevelUpMenu")), IMenu, LevelUpMenu);
+		if (!menu) return;
+		LevelupMenuStopPerkSound(&menu->unk180);
+	}
+};
+
 class Scaleform_PlaySound2 : public GFxFunctionHandler
 {
 public:
@@ -778,7 +810,7 @@ public:
 
 	virtual void	Invoke(Args * args) {
 		if (args->args[0].GetType() != GFxValue::kType_String) return;
-		PlaySound2_int(args->args[0].GetString());
+		PlayUISound(args->args[0].GetString());
 	}
 };
 
@@ -819,6 +851,8 @@ bool RegisterScaleform(GFxMovieView * view, GFxValue * f4se_root)
 	RegisterFunction<Scaleform_CloseMenu>(f4se_root, view->movieRoot, "CloseMenu");
 	RegisterFunction<Scaleform_MessageBox>(f4se_root, view->movieRoot, "MessageBox");
 	RegisterFunction<Scaleform_PlayPerkSound>(f4se_root, view->movieRoot, "PlayPerkSound");
+	RegisterFunction<Scaleform_PlayPerkSoundByName>(f4se_root, view->movieRoot, "PlayPerkSoundByName");
+	RegisterFunction<Scaleform_StopPerkSound>(f4se_root, view->movieRoot, "StopPerkSound");
 	RegisterFunction<Scaleform_PlaySound2>(f4se_root, view->movieRoot, "PlaySound2");
 
 	GFxMovieRoot	*movieRoot = view->movieRoot;
@@ -1503,7 +1537,6 @@ UInt32 LevelupMenuProcessMessage_Hook(LevelUpMenu * menu, UIMessage * message) {
 	return LevelupMenuProcessMessage_Original(menu, message);
 }
 
-
 extern "C"
 {
 
@@ -1663,6 +1696,8 @@ extern "C"
 
 			g_branchTrampoline.Write5Branch(LevelupMenuProcessMessage.GetUIntPtr(), (uintptr_t)LevelupMenuProcessMessage_Hook);
 		}
+
+
 		return true;
 	}
 
