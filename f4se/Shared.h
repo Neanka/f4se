@@ -1982,3 +1982,145 @@ public:
 	UInt64											unk228;
 };
 STATIC_ASSERT(sizeof(HUDAmmoCounter) == 0x230);
+
+struct ObjectInstanceData
+{
+	TESForm						* form;
+	TBO_InstanceData			* data;
+};
+using _CalcInstanceData = ObjectInstanceData * (*)(ObjectInstanceData & out, TESForm *, TBO_InstanceData *);
+extern RelocAddr<_CalcInstanceData>			CalcInstanceData;
+
+struct InventoryItemStack
+{
+	UInt64						unk00;
+	UInt64						unk08;
+	UInt64						unk10;
+	ExtraDataList				* extraList;
+};
+
+struct DamageInfo
+{
+	UInt32						type;
+	float						damage;
+};
+
+template<typename T>
+struct SimpleCollector
+{
+	UInt64						unk00;
+	T							* info;
+	UInt32						unk10;
+	UInt64						count;
+};
+
+// 340
+class WorkbenchMenuBase : public GameMenuBase
+{
+public:
+	TESObjectREFR*						refE0;
+	TESObjectREFR*						refE8;
+	tArray<void*>						arrayF0;
+	void*								unk108;
+	Inventory3DManager					inventory3DManager; // 110
+	BGSInventoryList					inventoryList; // 250
+	tArray<void*>						array2D0;
+	void*								unk2E8;
+	UInt32								unk2F0;
+	//UInt32								pad2F4;
+	void*								unk2F8; // TESObjectREFR. if 0x2F8 set "inspectMode" to 1
+	void*								unk300;
+	void*								unk308; // BSFadeNode
+	tArray<void*>						array310;
+	void*								unk328;
+	UInt32								unk330; // init'd as ctor 2nd param. 2 for PowerArmorModMenu, 1 for CookingMenu, 0 for RobotModMenu and ExamineMenu
+	UInt8								unk334; // something related to xinput
+	UInt8								unk335;
+	UInt16								pad336;
+	void*								unk338;
+};
+STATIC_ASSERT(sizeof(WorkbenchMenuBase) == 0x340);
+
+// 810
+class ExamineMenu : public WorkbenchMenuBase
+{
+public:
+
+	//930
+	class FXExamineMenu : public BSGFxShaderFXTarget
+	{
+	public:
+	};
+
+
+	tArray<void*>						array340;
+	void*								unk358; //
+	UInt32								unk360;
+	//UInt32								pad364;
+	UInt32								unk368;
+	UInt32								unk36C; // some ref handle ?
+
+												// 80
+	struct Struct370
+	{
+	public:
+		UInt32							unk00; // 370
+		UInt32							unk04; // 374
+		tArray<void*>					array08; // 378
+		tArray<void*>					array20; // 390
+		tArray<void*>					array38; // 3A8
+		UInt8							unk50; // 3C0
+		UInt8							pad51[7]; // 3C1
+		UInt32							unk58; // 3C8 some ref handle ?
+
+		struct array60struct
+		{
+			UInt32						handleID;
+			UInt32						pad04;
+		};
+		tArray<array60struct>			array60; // 3D0
+		/*
+	  0 +000 ptr: 0x000001CF4D5A8D40:                        <no rtti> *ptr: 0x000001cffacadfc8 | 0.000000, -526691394199076178167609602164654080.000000:                        <no rtti>
+	  1 +008 ptr: 0x000001CF4D5A8D48:                        <no rtti> *ptr: 0x0000000080000004 | 0.000000, -0.000000:                        <no rtti>
+	  2 +010 ptr: 0x000001CF4D5A8D50:                        <no rtti> *ptr: 0x0000000000000000 | 0.000000, 0.000000:                           (null)
+	  3 +018 ptr: 0x000001CF4D5A8D58:                        <no rtti> *ptr: 0x6d61724600000001 | 4360767207430781816509825024.000000, 0.000000:                        <no rtti>
+		*/
+		UInt8							byte78; // 3E8 init'd as 1
+	};
+	STATIC_ASSERT(sizeof(Struct370) == 0x80);
+
+	Struct370							struct370;
+	UInt32								unk3F0;
+	UInt32								unk3F4;
+	void*								unk3F8; //
+	void*								unk400; //
+	void*								unk408; //
+	void*								unk410; // init'd as &unk_143705AD4
+	void*								unk418; //
+	void*								unk420;
+	tArray<void*>						array428;
+	tArray<void*>						array440;
+	void*								unk458;
+	void*								unk460;
+	GFxValue							ButtonHintBar_mc; // 468
+	GFxValue							InventoryListObject; // 488
+	GFxValue							ItemName_tf; // 4A8
+	GFxValue							ItemCardList_mc; // 4C8
+	GFxValue							ModListObject; // 4E8
+	GFxValue							ModSlotListObject; // 508
+	GFxValue							CurrentModsListObject; // 528
+	BGSInventoryItem					tempInventoryItem; // 548
+	UInt8								unk558;
+	UInt32								unk55C[6];
+	tArray<void*>						array578;
+	void*								unk590[2];
+	GFxValue							RequirementsListObject; // 5A0
+	GFxValue							MiscItemListObject; // 5C0
+	void*								unk5E0[2]; // if *(_BYTE *)(a1 + 0x5ED) invoke "StartInspectMode"
+	UInt8								unk5F0;
+	UInt8								pad5F1[7];
+	void*								unk5F8[65];
+	void*								unk800;
+	void*								unk808;
+};
+STATIC_ASSERT(sizeof(ExamineMenu) == 0x810);

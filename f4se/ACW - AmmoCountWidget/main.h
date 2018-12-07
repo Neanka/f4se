@@ -5,7 +5,7 @@ void ReadSettings();
 
 void ApplySettings(GFxMovieRoot * movieRoot);
 
-void ToggleReserveVisibility(UInt8 visible);
+void ToggleReserveVisibility(UInt8 visible, GFxMovieRoot * movieRoot);
 
 void TuneLinePosition(float newLineLength);
 

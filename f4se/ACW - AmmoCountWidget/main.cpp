@@ -16,11 +16,12 @@ F4SEMessagingInterface		*g_messaging = NULL;
 #define AMMO_COUNT_STRING_FORMAT_ADDRESS 0x2D3E0C8
 #define CLIP_COUNT_WAS_CHANGED_CHECK_ADDRESS 0x0A0E94E
 #define RESERVE_COUNT_WAS_CHANGED_CHECK_ADDRESS 0x0A0E8EA
+#define UPDATE_COMPONENT_HOOK_ADDRESS 0x2D3DFA8
 
 RelocPtr <UInt32> uAmmoCounterFadeTimeMS(AMMO_COUNT_FADE_TIME_ADDRESS);
 
 typedef UInt32(*_HUDAmmoCounter__UpdateComponent)(HUDAmmoCounter* hUDAmmoCounter);
-RelocAddr <_HUDAmmoCounter__UpdateComponent> HUDAmmoCounter__UpdateComponent_HookTarget(0x0002D3DFA8);
+RelocAddr <_HUDAmmoCounter__UpdateComponent> HUDAmmoCounter__UpdateComponent_HookTarget(UPDATE_COMPONENT_HOOK_ADDRESS);
 //RelocAddr <_HUDAmmoCounter__UpdateComponent> HUDAmmoCounter__UpdateComponent(0x000A0E580);
 _HUDAmmoCounter__UpdateComponent HUDAmmoCounter__UpdateComponent_Original;
 
@@ -70,13 +71,9 @@ void ReadSettings()
 void ApplySettings(GFxMovieRoot * movieRoot = nullptr)
 {
 	if (iFadeTimeMS)
-	{
 		*uAmmoCounterFadeTimeMS = iFadeTimeMS;
-	}
 	else
-	{
 		*uAmmoCounterFadeTimeMS = UINT32_MAX;
-	}
 
 	UInt32 data = 999;
 	unsigned char data2[] = { 0x25, 0x30, 0x33, 0x75, 0x00 };
@@ -125,21 +122,15 @@ void ApplySettings(GFxMovieRoot * movieRoot = nullptr)
 	}
 	if (bTunePosition)
 		TuneWidgetPosition(movieRoot);
-	ToggleReserveVisibility(bShowReserveCount);
+	ToggleReserveVisibility(bShowReserveCount, movieRoot);
 	if (bHorisontalAlign && bShowReserveCount)
 		SetHorizontalElementsPosition(movieRoot);
 	else
 		SetDefaultElementsPosition(movieRoot);
 }
 
-void ToggleReserveVisibility(UInt8 visible)
+void ToggleReserveVisibility(UInt8 visible, GFxMovieRoot * movieRoot)
 {
-	IMenu* menu = (*g_ui)->GetMenu(BSFixedString("HUDMenu"));
-	if (!menu) return;
-	GFxMovieView* movie = menu->movie;
-	if (!movie) return;
-	GFxMovieRoot* movieRoot = movie->movieRoot;
-	if (!movieRoot) return;
 	movieRoot->SetVariable("root.RightMeters_mc.AmmoCount_mc.ReserveCount_tf.visible", &GFxValue(visible == 1));
 	movieRoot->SetVariable("root.RightMeters_mc.AmmoCount_mc.AmmoLineInstance.visible", &GFxValue(visible == 1));
 	_MESSAGE("ToggleReserveVisibility");

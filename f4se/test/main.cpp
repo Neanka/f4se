@@ -25,6 +25,49 @@ typedef void(*_PipboyMenuInvoke)(PipboyMenu* menu, GFxFunctionHandler::Args* arg
 RelocAddr <_PipboyMenuInvoke> PipboyMenuInvoke(0x00B93F60);
 _PipboyMenuInvoke PipboyMenuInvoke_Original;
 
+typedef void(*_PopulateItemCardInfoList)(void** param1, void** param2, void** param3, void** param4, void** param5, void** param6);
+RelocAddr <_PopulateItemCardInfoList> PopulateItemCardInfoList(0x0AED710);
+_PopulateItemCardInfoList PopulateItemCardInfoList_Original;
+
+void PopulateItemCardInfoList_Hook(void** param1, void** param2, void** param3, void** param4, void** param5, void** param6) {
+	_MESSAGE("PopulateItemCardInfoList_Hook");
+	PopulateItemCardInfoList_Original(param1, param2, param3, param4, param5, param6);
+}
+
+typedef void(*_ExamineMenu__Invoke)(ExamineMenu* menu, GFxFunctionHandler::Args * args);
+RelocAddr <_ExamineMenu__Invoke> ExamineMenu__Invoke_HookTarget(0x2D46160);
+_ExamineMenu__Invoke ExamineMenu__Invoke_Original;
+
+void ExamineMenu__Invoke_Hook(ExamineMenu* menu, GFxFunctionHandler::Args * args) {
+	_MESSAGE("ExamineMenu__Invoke_Hook");
+	if (args->optionID == 0)
+	{
+		DumpClass(menu, 0x810 / 8);
+	}
+
+	//DumpClass(&menu->struct548, 2);
+	//if (menu->struct548.stack)
+	//{
+	//	ExtraDataList* edl = menu->struct548.stack->extraData;
+	//	if (edl)
+	//	{
+	//		BSExtraData* next = edl->m_data;
+	//		while (next)
+	//		{
+	//			DumpClass(next, 1);
+	//			next = next->next;
+	//		}
+	//	}
+	//}
+	ExamineMenu__Invoke_Original(menu, args);
+
+	if (args->optionID == 0x17)
+	{
+	//	DumpClass(menu, 0x810 / 8);
+
+	}
+
+}
 
 void DumpWorkshopEntry(WorkshopEntry* entry)
 {
@@ -400,8 +443,65 @@ STATIC_ASSERT(sizeof(BGSSaveLoadManager) == 0x980);
 
 bool testfunk(StaticFunctionTag *base) {
 	_MESSAGE("testfunk");
-	GFxValue;
-	tArray<void*>;
+
+
+	Actor* playerref = *g_player;
+	playerref->inventoryList->inventoryLock.LockForRead();
+
+	for (size_t i = 0; i < playerref->inventoryList->items.count; i++)
+	{
+		TESForm* form = playerref->inventoryList->items[i].form;
+		BGSInventoryItem::Stack* stack = playerref->inventoryList->items[i].stack;
+		if (form->formType == kFormType_WEAP)
+		{
+			TESObjectWEAP* weap = (TESObjectWEAP*)form;
+
+			stack->Visit([&](BGSInventoryItem::Stack * stackx)
+			{
+				ExtraDataList * stackDataList = stackx->extraData;
+
+				if (stackDataList) {
+					ExtraInstanceData * eid = DYNAMIC_CAST(stackDataList->GetByType(kExtraData_InstanceData), BSExtraData, ExtraInstanceData);
+					if (eid)
+					{
+						_MESSAGE("stack data");
+						//DumpClass(eid->instanceData, 0x138 / 8);
+						TESObjectWEAP::InstanceData* weapData = (TESObjectWEAP::InstanceData*)eid->instanceData;
+
+						ObjectInstanceData objInst{ nullptr, nullptr };
+
+						CalcInstanceData(objInst, form, eid->instanceData);
+						if (objInst.data)
+						{
+							_MESSAGE("calculated data");
+							//DumpClass(objInst.data, 0x138/8);
+							weapData = (TESObjectWEAP::InstanceData*)objInst.data;
+							SimpleCollector<DamageInfo>		damageInfo{ 0, nullptr, 0, 0 };
+							InventoryItemStack				stack{ 0, 0, 0, stackDataList };
+							RelocAddr<void(*)(TESForm *&, InventoryItemStack &, SimpleCollector<DamageInfo>&)> CollectDamageInfo = 0xC0AB50; ///V1.10.106
+							CollectDamageInfo(form, stack, damageInfo);
+
+							for (size_t i = 0; i < damageInfo.count; ++i)
+							{
+								if (damageInfo.info[i].damage != 0.0f)
+								{
+									_MESSAGE("damageType %i value %f", damageInfo.info[i].type, damageInfo.info[i].damage);
+								}
+							}
+
+						}
+					}
+				}
+				return true;
+			});
+		}
+	}
+
+
+	playerref->inventoryList->inventoryLock.Unlock();
+
+
+	return true;
 	//------------------- SAVE GAMES -------------
 
 	RelocPtr <void*> g_UISaveLoadManager(0x5A13258); // 0x60?
@@ -953,10 +1053,35 @@ extern "C"
 			g_branchTrampoline.Write6Branch(OnWorkshopMenuButtonEvent.GetUIntPtr(), (uintptr_t)OnWorkshopMenuButtonEvent_Hook);
 		}
 
-		unsigned char data[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
-		//SafeWriteBuf(wsm_firstAddress.GetUIntPtr(), &data, sizeof(data));
+		{
+			struct PopulateItemCardInfoList_Code : Xbyak::CodeGenerator {
+				PopulateItemCardInfoList_Code(void * buf) : Xbyak::CodeGenerator(4096, buf)
+				{
+					Xbyak::Label retnLabel;
+
+					mov(rax, rsp);
+					mov(ptr[rax+0x20], r9);
+
+					jmp(ptr[rip + retnLabel]);
+
+					L(retnLabel);
+					dq(PopulateItemCardInfoList.GetUIntPtr() + 7);
+				}
+			};
+
+			void * codeBuf = g_localTrampoline.StartAlloc();
+			PopulateItemCardInfoList_Code code(codeBuf);
+			g_localTrampoline.EndAlloc(code.getCurr());
+
+			PopulateItemCardInfoList_Original = (_PopulateItemCardInfoList)codeBuf;
+
+			g_branchTrampoline.Write6Branch(PopulateItemCardInfoList.GetUIntPtr(), (uintptr_t)PopulateItemCardInfoList_Hook);
+		}
+
+		unsigned char data[] = { 0x90, 0x90, 0x90, 0x90, 0x90 };
+		//SafeWriteBuf(RelocAddr<uintptr_t>(0x0B18586).GetUIntPtr(), &data, sizeof(data));
 		//g_branchTrampoline.Write5Call(wsm_secondAddress.GetUIntPtr(), (uintptr_t)myReplacingFunction);
-		
+		ExamineMenu__Invoke_Original = HookUtil::SafeWrite64(ExamineMenu__Invoke_HookTarget.GetUIntPtr(), &ExamineMenu__Invoke_Hook);
 
 		return true;
 	}

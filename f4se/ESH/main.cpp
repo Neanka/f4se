@@ -214,7 +214,7 @@ void checkEquippedExplosiveListPosition()
 void checkEquippedExplosive()
 {
 	Actor* playerref = *g_player;
-	playerref->inventoryList->inventoryLock.Lock();
+	playerref->inventoryList->inventoryLock.LockForRead();
 
 	equippedExplosive.weap = nullptr;
 	equippedExplosive.instance = nullptr;
@@ -255,7 +255,7 @@ void checkEquippedExplosive()
 		}
 	}
 
-	playerref->inventoryList->inventoryLock.Release();
+	playerref->inventoryList->inventoryLock.Unlock();
 }
 
 ESH_TESEquipEventSink g_ESH_TESEquipEventSink;

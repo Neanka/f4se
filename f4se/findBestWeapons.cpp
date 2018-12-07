@@ -254,7 +254,7 @@ namespace FindBestWeapons
 		if (!ref)
 			return;
 		_DMESSAGE("Starting FindBestWeapons() for %s", ref->baseForm->GetFullName());
-		ref->inventoryList->inventoryLock.Lock();
+		ref->inventoryList->inventoryLock.LockForRead();
 
 		for (size_t i = 0; i < ref->inventoryList->items.count; i++)
 		{
@@ -371,7 +371,7 @@ namespace FindBestWeapons
 				});
 			}
 		}
-		ref->inventoryList->inventoryLock.Release();
+		ref->inventoryList->inventoryLock.Unlock();
 		_DMESSAGE("best ranged weapon is %s with %f DPS", rangedWeapForUI.name, rangedWeapForUI.dps);
 		_DMESSAGE("best melee weapon is %s with %f DPS", meleeWeapForUI.name, meleeWeapForUI.dps);
 	}
@@ -389,7 +389,7 @@ namespace FindBestWeapons
 	void UnEquipCurrentWeapon(Actor* actor)
 	{
 		WeapToEquip weapforequip = {};
-		actor->inventoryList->inventoryLock.Lock();
+		actor->inventoryList->inventoryLock.LockForRead();
 
 		for (size_t i = 0; i < actor->inventoryList->items.count; i++)
 		{
@@ -423,6 +423,6 @@ namespace FindBestWeapons
 				});
 			}
 		}
-		actor->inventoryList->inventoryLock.Release();
+		actor->inventoryList->inventoryLock.Unlock();
 	}
 }
