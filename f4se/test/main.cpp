@@ -38,6 +38,10 @@ typedef void(*_ExamineMenu__Invoke)(ExamineMenu* menu, GFxFunctionHandler::Args 
 RelocAddr <_ExamineMenu__Invoke> ExamineMenu__Invoke_HookTarget(0x2D46160);
 _ExamineMenu__Invoke ExamineMenu__Invoke_Original;
 
+typedef SInt32(*_GetInventoryListObjectSelectedIndex)(ExamineMenu* menu);
+RelocAddr <_GetInventoryListObjectSelectedIndex> GetInventoryListObjectSelectedIndex(0x0B1B160);
+_GetInventoryListObjectSelectedIndex GetInventoryListObjectSelectedIndex_Original;
+
 void ExamineMenu__Invoke_Hook(ExamineMenu* menu, GFxFunctionHandler::Args * args) {
 	_MESSAGE("ExamineMenu__Invoke_Hook");
 	if (args->optionID == 0)
@@ -64,6 +68,10 @@ void ExamineMenu__Invoke_Hook(ExamineMenu* menu, GFxFunctionHandler::Args * args
 	if (args->optionID == 0x17)
 	{
 	//	DumpClass(menu, 0x810 / 8);
+		GFxValue InfoObj;
+		menu->ItemCardList_mc.GetMember("InfoObj", &InfoObj);
+		//traceGFxValue(&InfoObj);
+		_MESSAGE("GetInventoryListObjectSelectedIndex %i", GetInventoryListObjectSelectedIndex(menu));
 
 	}
 
