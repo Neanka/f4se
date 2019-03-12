@@ -122,6 +122,7 @@
   <ItemGroup>
     <ClCompile Include="..\Shared.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="SSWTranslator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Shared.h" />

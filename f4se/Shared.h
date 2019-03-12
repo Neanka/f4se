@@ -904,7 +904,8 @@ struct PlayerDifficultySettingChanged
 {
 	struct Event
 	{
-
+		UInt32	from;
+		UInt32	to;
 	};
 };
 
@@ -1039,8 +1040,16 @@ class PipboyArray : public PipboyValue
 public:
 
 	tArray<PipboyValue*>				value;		// 18
+	 void*	unk30;
+	 void*	unk38;
+	 void*	unk40;
+	 void*	unk48; // &unk_1437093E4
+	 void*	unk50;
+	 void*	unk58;
+	 tArray<void*>	unk60;
+	 UInt8	unk78; // init'd as 1
 };
-STATIC_ASSERT(sizeof(PipboyArray) == 0x30);
+STATIC_ASSERT(sizeof(PipboyArray) == 0x80);
 
 void tracePipboyPrimitiveValueInt(PipboyPrimitiveValue<SInt32>* val);
 
@@ -1415,7 +1424,38 @@ struct PipboyDataManager {
 };
 STATIC_ASSERT(sizeof(PipboyDataManager) == 0xCC0);
 
-extern RelocPtr <void*> g_itemMenuDataMgr;
+// D0
+class ItemMenuDataManager {
+public:
+	void*				unk00;
+	UInt32				unk08;
+	UInt32				unk0C;
+	tArray<void*>		unkArray10;	// EventSinks
+	tArray<void*>		unkArray28;
+	tArray<void*>		unkArray40;
+	UInt8				unk58;
+	UInt8				pad59[7];
+	UInt32				unk60;
+	UInt32				unk64;
+	tArray<void*>		unkArray68;
+	tArray<void*>		unkArray80;
+	tArray<void*>		unkArray98;
+	UInt8				unkB0;
+	UInt8				padB1[7];
+	struct Entry
+	{
+	public:
+		UInt32			handleID; // 00
+		UInt32			ownerHandle; // 04
+		UInt16			itemPosition; // 08 position in inventoryList
+		UInt16			unk0A;
+	};
+	STATIC_ASSERT(sizeof(Entry) == 0xC);
+	tArray<Entry>		inventoryItems; // B8
+};
+STATIC_ASSERT(sizeof(ItemMenuDataManager) == 0xD0);
+
+extern RelocPtr <ItemMenuDataManager*> g_itemMenuDataMgr;
 
 typedef BGSInventoryItem*(*_getInventoryItemByHandleID)(void* param1, UInt32* handleid);
 extern RelocAddr <_getInventoryItemByHandleID> getInventoryItemByHandleID;
@@ -1558,7 +1598,7 @@ struct unkInventoryStruct
 {
 	UInt32 HandleID;
 	UInt32 pad0c;
-	UInt32 unk08;
+	UInt32 unk08; // if unk08 & 0x80000000 then unk10 = stackID else *stackID
 	UInt32 unk0c;
 	UInt16 stackid; // ?
 	UInt16 pad12[3];
@@ -1949,6 +1989,10 @@ STATIC_ASSERT(sizeof(InventoryUpdateData) == 0x28);
 
 void DumpClassX(void * theClassPtr, UInt64 nIntsToDump);
 
+bool GetScriptVariableValue(VMIdentifier * id, const char * varName, VMValue * outVal);
+
+void traceVMValue(VMValue * val);
+
 template <typename T>
 class BSTValueEventSink : public BSTEventSink<T>
 {
@@ -2009,9 +2053,7 @@ template<typename T>
 struct SimpleCollector
 {
 	UInt64						unk00;
-	T							* info;
-	UInt32						unk10;
-	UInt64						count;
+	tArray<T>					itemsArray;
 };
 
 // 340
@@ -2072,19 +2114,7 @@ public:
 		UInt8							unk50; // 3C0
 		UInt8							pad51[7]; // 3C1
 		UInt32							unk58; // 3C8 some ref handle ?
-
-		struct array60struct
-		{
-			UInt32						handleID;
-			UInt32						pad04;
-		};
-		tArray<array60struct>			array60; // 3D0
-		/*
-	  0 +000 ptr: 0x000001CF4D5A8D40:                        <no rtti> *ptr: 0x000001cffacadfc8 | 0.000000, -526691394199076178167609602164654080.000000:                        <no rtti>
-	  1 +008 ptr: 0x000001CF4D5A8D48:                        <no rtti> *ptr: 0x0000000080000004 | 0.000000, -0.000000:                        <no rtti>
-	  2 +010 ptr: 0x000001CF4D5A8D50:                        <no rtti> *ptr: 0x0000000000000000 | 0.000000, 0.000000:                           (null)
-	  3 +018 ptr: 0x000001CF4D5A8D58:                        <no rtti> *ptr: 0x6d61724600000001 | 4360767207430781816509825024.000000, 0.000000:                        <no rtti>
-		*/
+		tArray<unkInventoryStruct>		inventory; // 3D0
 		UInt8							byte78; // 3E8 init'd as 1
 	};
 	STATIC_ASSERT(sizeof(Struct370) == 0x80);
@@ -2116,7 +2146,7 @@ public:
 	void*								unk590[2];
 	GFxValue							RequirementsListObject; // 5A0
 	GFxValue							MiscItemListObject; // 5C0
-	void*								unk5E0[2]; // if *(_BYTE *)(a1 + 0x5ED) invoke "StartInspectMode"
+	void*								unk5E0[2]; // if *(_BYTE *)(a1 + 0x5ED) invoke "StartInspectMode". if 0x5EC invoke "AbortTextEditing"
 	UInt8								unk5F0;
 	UInt8								pad5F1[7];
 	void*								unk5F8[65];

@@ -1,5 +1,6 @@
 #include "main.h"
 
+// off_142EDBFF0 GFxMovieRoot vftable
 
 std::string mName = "test";
 UInt32 mVer = 1;
@@ -14,6 +15,29 @@ F4SEScaleformInterface		*g_scaleform = NULL;
 F4SEPapyrusInterface		*g_papyrus = NULL;
 F4SEMessagingInterface		*g_messaging = NULL;
 
+#include "ObScript.h"
+RelocAddr <ObScript_Execute> mfg_execute(0x05265A0);
+ObScript_Execute mfg_execute_Original;
+
+bool mfg_execute_Hook(void * paramInfo, void * scriptData, TESObjectREFR * thisObj, void * containingObj, void * scriptObj, void * locals, double * result, void * opcodeOffsetPtr) {
+	_MESSAGE("mfg_execute_Hook");
+	//_MESSAGE("thisObj name %s", thisObj->baseForm->GetFullName());
+	DumpClass(paramInfo, 10);
+	DumpClass(scriptData, 10);
+	DumpClass(thisObj, 10);
+	DumpClass(containingObj, 10);
+	DumpClass(scriptObj, 0x80/8);
+	DumpClass(locals, 20);
+	DumpClass(result, 1);
+	DumpClass(opcodeOffsetPtr, 10);
+	//_MESSAGE("Script name %s", ((TESForm*)*locals)->GetFullName());
+	return mfg_execute_Original(paramInfo, scriptData, thisObj, containingObj, scriptObj, locals, result, opcodeOffsetPtr);
+}
+
+// 0x0C0FDD0 pipboyitemcard update
+
+// 590DA80  BGSInventoryItemEvent event dispatcher
+
 typedef void(*_ContainerMenuInvoke)(ContainerMenuBase* menu, GFxFunctionHandler::Args* args);
 
 RelocAddr <_ContainerMenuInvoke> ContainerMenuInvoke(0x00B0A280);
@@ -25,13 +49,190 @@ typedef void(*_PipboyMenuInvoke)(PipboyMenu* menu, GFxFunctionHandler::Args* arg
 RelocAddr <_PipboyMenuInvoke> PipboyMenuInvoke(0x00B93F60);
 _PipboyMenuInvoke PipboyMenuInvoke_Original;
 
-typedef void(*_PopulateItemCardInfoList)(void** param1, void** param2, void** param3, void** param4, void** param5, void** param6);
+BGSDamageType* ConditionDtype;
+RelocAddr<void(*)(TESForm *&, InventoryItemStack &, SimpleCollector<DamageInfo>&)> CollectDamageInfo = 0xC0AB50; ///V1.10.106
+
+
+typedef SInt32(*_CalcDiffRating)(float value1, float value2);
+RelocAddr <_CalcDiffRating> CalcDiffRating(0x0C0B630);
+
+struct InvItemStackStruct
+{
+public:
+	BGSInventoryItem *	invItem;
+	UInt16				stackID;
+};
+
+typedef void(*_PopulateItemCardInfoList)(GFxValue* itemCard, BGSInventoryItem * itemForCard, UInt16 itemForCardstackID, SimpleCollector<InvItemStackStruct>* itemsForCompare);
 RelocAddr <_PopulateItemCardInfoList> PopulateItemCardInfoList(0x0AED710);
 _PopulateItemCardInfoList PopulateItemCardInfoList_Original;
 
-void PopulateItemCardInfoList_Hook(void** param1, void** param2, void** param3, void** param4, void** param5, void** param6) {
-	_MESSAGE("PopulateItemCardInfoList_Hook");
-	PopulateItemCardInfoList_Original(param1, param2, param3, param4, param5, param6);
+class Objectinterface_x
+{
+public:
+	void*	unk00;
+	GFxMovieView*	view;
+	void*	unk10;
+};
+
+UInt32 GetMaxCND(TESObjectWEAP::InstanceData* weapData)
+{
+	if (!weapData) return 0;
+	if (weapData->damageTypes)
+	{
+		for (size_t i = 0; i < (*(weapData->damageTypes)).count; i++)
+		{
+			BGSDamageType* dt = (*(weapData->damageTypes))[i].damageType;
+			if (dt == ConditionDtype)
+			{
+				return (*(weapData->damageTypes))[i].value;
+			}
+		}
+	}
+	return 0;
+}
+
+BGSInventoryItem::Stack* GetStackByStackID(BGSInventoryItem * item, UInt16 stackID)
+{
+	BGSInventoryItem::Stack* stack = item->stack;
+	if (!stack) return NULL;
+	while (stackID != 0)
+	{
+		stack = stack->next;
+		if (!stack) return NULL;
+		stackID--;
+	}
+	return stack;
+}
+
+TBO_InstanceData* GetTBO_InstanceDataFromInventoryItem(BGSInventoryItem * item, UInt16 stackID) // 0x01A61F0
+{
+	BGSInventoryItem::Stack* stack = item->stack;
+	if (!stack) return NULL;
+	while (stackID != 0)
+	{
+		stack = stack->next;
+		if (!stack) return NULL;
+		stackID--;
+	}
+	if (stack)
+	{
+		ExtraInstanceData * eid = DYNAMIC_CAST(stack->extraData->GetByType(kExtraData_InstanceData), BSExtraData, ExtraInstanceData);
+		if (eid) return eid->instanceData;
+	}
+	return NULL;
+}
+
+float GetHealthFromInventoryItem(BGSInventoryItem * item, UInt16 stackID)
+{
+	BGSInventoryItem::Stack* stack = item->stack;
+	if (!stack) return 0.0;
+	while (stackID != 0)
+	{
+		stack = stack->next;
+		if (!stack) return 0.0;
+		stackID--;
+	}
+	if (stack)
+	{
+		ExtraHealth * eh = DYNAMIC_CAST(stack->extraData->GetByType(kExtraData_Health), BSExtraData, ExtraHealth);
+		if (eh) return eh->health;
+	}
+	return 0.0;
+}
+
+void processItemCardInfoList(GFxValue* itemCard, BGSInventoryItem * itemForCard, UInt16 itemForCardstackID, SimpleCollector<InvItemStackStruct>* itemsForCompare)
+{
+	GFxMovieView* view = ((Objectinterface_x*)itemCard->objectInterface)->view;
+	if (!view) return;
+	GFxMovieRoot* root = view->movieRoot;
+	if (!root) return;
+	ObjectInstanceData objInst{ nullptr, nullptr };
+	CalcInstanceData(objInst, itemForCard->form, GetTBO_InstanceDataFromInventoryItem(itemForCard, itemForCardstackID));
+
+	if (itemForCard->form->formType == kFormType_WEAP)
+	{
+		TESObjectWEAP::InstanceData* weapData = (TESObjectWEAP::InstanceData*)Runtime_DynamicCast(objInst.data, RTTI_TBO_InstanceData, RTTI_TESObjectWEAP__InstanceData);
+		if (!weapData) return;
+		UInt32 MaxCNDValue = GetMaxCND(weapData);
+		if (!MaxCNDValue) return; // check IsWeaponDegradable
+	
+		TESObjectWEAP::InstanceData* itemForCompare = nullptr;
+		ObjectInstanceData compareInst{ nullptr, nullptr };
+		InvItemStackStruct compareItem;
+		// get weapon with same animation type from all equipped weapons
+		for (size_t i = 0; i < itemsForCompare->itemsArray.count; i++)
+		{
+			if (itemsForCompare->itemsArray[i].invItem->form->formType == kFormType_WEAP)
+			{
+				CalcInstanceData(compareInst, itemsForCompare->itemsArray[i].invItem->form, GetTBO_InstanceDataFromInventoryItem(itemsForCompare->itemsArray[i].invItem, itemsForCompare->itemsArray[i].stackID));
+				TESObjectWEAP::InstanceData* tempItemForCompare = (TESObjectWEAP::InstanceData*)Runtime_DynamicCast(compareInst.data, RTTI_TBO_InstanceData, RTTI_TESObjectWEAP__InstanceData);
+				if (tempItemForCompare->unk137 == weapData->unk137)
+				{
+					compareItem = itemsForCompare->itemsArray[i];
+					itemForCompare = tempItemForCompare;
+				}
+			}
+		}
+		UInt32 MaxCNDCompareValue = GetMaxCND(itemForCompare);
+
+		float cndValue = round(100 * GetHealthFromInventoryItem(itemForCard, itemForCardstackID));
+		GFxValue cnd;
+		root->CreateObject(&cnd);
+		RegisterString(&cnd, root, "text", "CND");
+		std::string health = std::to_string(int(cndValue)) + "%";
+		RegisterString(&cnd, root, "value", health.c_str());
+		if (MaxCNDCompareValue)
+		{
+			float cndCompareValue = round(100 * GetHealthFromInventoryItem(compareItem.invItem, compareItem.stackID));
+			RegisterInt(&cnd, "difference", int(cndValue-cndCompareValue));
+			RegisterInt(&cnd, "diffRating", CalcDiffRating(cndValue, cndCompareValue));
+		}
+
+		itemCard->PushBack(&cnd);
+
+		GFxValue maxCnd;
+		root->CreateObject(&maxCnd);
+		RegisterString(&maxCnd, root, "text", "MAX CND");
+		RegisterString(&maxCnd, root, "value", std::to_string(MaxCNDValue).c_str());
+		if (MaxCNDCompareValue)
+		{
+			RegisterInt(&maxCnd, "difference", int(MaxCNDValue - MaxCNDCompareValue));
+			RegisterInt(&maxCnd, "diffRating", CalcDiffRating(MaxCNDValue, MaxCNDCompareValue));
+		}
+		itemCard->PushBack(&maxCnd);
+	}
+	else if (itemForCard->form->formType == kFormType_ARMO)
+	{
+
+	}
+	// etc..
+}
+
+
+void PopulateItemCardInfoList_Hook(GFxValue* itemCard, BGSInventoryItem * itemForCard, UInt16 itemForCardstackID, SimpleCollector<InvItemStackStruct>* itemsForCompare) {
+	/*GFxMovieView* view = ((Objectinterface_x*)itemCard->objectInterface)->view;
+	if (view)
+	{
+		IMenu* menu = (*g_ui)->GetMenuByMovie(view);
+		ContainerMenuBase* containermenu = DYNAMIC_CAST(menu, IMenu, ContainerMenuBase);
+		if (containermenu)
+		{
+			UInt32 handle = containermenu->targetHandle;
+			// do some stuff here
+		}
+	}*/
+	PopulateItemCardInfoList_Original(itemCard, itemForCard, itemForCardstackID, itemsForCompare);
+	if ((itemCard->type & 0x8F) == 9)
+	{
+		processItemCardInfoList(itemCard, itemForCard, itemForCardstackID, itemsForCompare);
+	}
+	else
+	{
+		GFxValue ItemCardInfoList;
+		itemCard->GetMember("ItemCardInfoList", &ItemCardInfoList);
+		processItemCardInfoList(&ItemCardInfoList, itemForCard, itemForCardstackID, itemsForCompare);
+	}
 }
 
 typedef void(*_ExamineMenu__Invoke)(ExamineMenu* menu, GFxFunctionHandler::Args * args);
@@ -42,6 +243,15 @@ typedef SInt32(*_GetInventoryListObjectSelectedIndex)(ExamineMenu* menu);
 RelocAddr <_GetInventoryListObjectSelectedIndex> GetInventoryListObjectSelectedIndex(0x0B1B160);
 _GetInventoryListObjectSelectedIndex GetInventoryListObjectSelectedIndex_Original;
 
+void SetPlayerNameTest(const char* newName)
+{
+	typedef void(*_SetPlayerName_int)(TESForm* baseForm, const char* newName);
+	RelocAddr <_SetPlayerName_int> SetPlayerName_int(0x00BB9040);
+	TESForm* baseForm = (*g_player)->baseForm;
+	SetPlayerName_int(baseForm, newName);
+	baseForm->MarkChanged(0x20);
+}
+
 void ExamineMenu__Invoke_Hook(ExamineMenu* menu, GFxFunctionHandler::Args * args) {
 	_MESSAGE("ExamineMenu__Invoke_Hook");
 	if (args->optionID == 0)
@@ -49,20 +259,7 @@ void ExamineMenu__Invoke_Hook(ExamineMenu* menu, GFxFunctionHandler::Args * args
 		DumpClass(menu, 0x810 / 8);
 	}
 
-	//DumpClass(&menu->struct548, 2);
-	//if (menu->struct548.stack)
-	//{
-	//	ExtraDataList* edl = menu->struct548.stack->extraData;
-	//	if (edl)
-	//	{
-	//		BSExtraData* next = edl->m_data;
-	//		while (next)
-	//		{
-	//			DumpClass(next, 1);
-	//			next = next->next;
-	//		}
-	//	}
-	//}
+
 	ExamineMenu__Invoke_Original(menu, args);
 
 	if (args->optionID == 0x17)
@@ -70,11 +267,45 @@ void ExamineMenu__Invoke_Hook(ExamineMenu* menu, GFxFunctionHandler::Args * args
 	//	DumpClass(menu, 0x810 / 8);
 		GFxValue InfoObj;
 		menu->ItemCardList_mc.GetMember("InfoObj", &InfoObj);
+
 		//traceGFxValue(&InfoObj);
 		_MESSAGE("GetInventoryListObjectSelectedIndex %i", GetInventoryListObjectSelectedIndex(menu));
+		DumpClass(&menu->struct370.inventory.entries[GetInventoryListObjectSelectedIndex(menu)],4);
 
+		if (menu->tempInventoryItem.stack)
+		{
+			ExtraDataList* edl = menu->tempInventoryItem.stack->extraData;
+			if (edl)
+			{
+				BSExtraData* next = edl->m_data;
+				while (next)
+				{
+					_MESSAGE("%s", GetObjectClassName(next));
+					next = next->next;
+				}
+			}
+		}
 	}
+	traceGFxValue(&menu->ItemCardList_mc);
 
+}
+
+typedef UInt8(*_ExamineMenu__DrawNextFrame)(ExamineMenu* menu, void** param2, void** param3);
+RelocAddr <_ExamineMenu__DrawNextFrame> ExamineMenu__DrawNextFrame(0x0B17EC0);
+_ExamineMenu__DrawNextFrame ExamineMenu__DrawNextFrame_Original;
+
+UInt8 ExamineMenu__DrawNextFrame_Hook(ExamineMenu* menu, void** param2, void** param3) {
+	UInt8 result = ExamineMenu__DrawNextFrame_Original(menu, param2, param3);
+	GFxValue bIsDirty;
+	menu->ItemCardList_mc.GetMember("bIsDirty", &bIsDirty);
+	if ((bIsDirty.type & 0x8F) == GFxValue::kType_Bool)
+	{
+		if (bIsDirty.GetBool())
+		{
+			_MESSAGE("isdirty");
+		}
+	}
+	return result;
 }
 
 void DumpWorkshopEntry(WorkshopEntry* entry)
@@ -188,6 +419,12 @@ void PipboyMenuInvoke_Hook(PipboyMenu * menu, GFxFunctionHandler::Args * args) {
 				tracePipboyArray((PipboyArray*)ti2->value);
 			}
 		}
+		/*
+		for (size_t i = 0; i < (*g_PipboyDataManager)->inventoryData.inventoryObjects.count; i++)
+		{
+			tracePipboyValue((*g_PipboyDataManager)->inventoryData.inventoryObjects[i]);
+		}
+		*/
 	}
 	return PipboyMenuInvoke_Original(menu, args);
 }
@@ -195,6 +432,7 @@ void PipboyMenuInvoke_Hook(PipboyMenu * menu, GFxFunctionHandler::Args * args) {
 
 void ContainerMenuInvoke_Hook(ContainerMenuBase * menu, GFxFunctionHandler::Args * args) {
 	ContainerMenuInvoke_Original(menu, args);
+	return;
 	if (args->optionID != 3) return;
 	int itemIndex = args->args[0].GetInt();
 	if (itemIndex < 0) return;
@@ -250,34 +488,6 @@ void ContainerMenuInvoke_Hook(ContainerMenuBase * menu, GFxFunctionHandler::Args
 	ListArrayItem.GetMember("ItemCardInfoList", &ListArrayItemCardInfoList);
 	// put ur code there. use ii and stackID variables
 
-	TESForm* form = ii->form;
-	BGSInventoryItem::Stack* currentStack = ii->stack;
-	while (stackID != 0)
-	{
-		currentStack = currentStack->next;
-		stackID--;
-	}
-	if (form->formType == kFormType_WEAP)
-	{
-		TESObjectWEAP* weap = (TESObjectWEAP*)form;
-		float APCost = weap->weapData.actionCost;
-		ExtraDataList * stackDataList = currentStack->extraData;
-		if (stackDataList) {
-			ExtraInstanceData * eid = DYNAMIC_CAST(stackDataList->GetByType(kExtraData_InstanceData), BSExtraData, ExtraInstanceData);
-			if (eid)
-			{
-				((TESObjectWEAP::InstanceData*)eid->instanceData)->baseDamage = 1000;
-				APCost = ((TESObjectWEAP::InstanceData*)eid->instanceData)->actionCost;
-			}
-		}
-		GFxValue extraData;
-		root->CreateObject(&extraData);
-		RegisterString(&extraData, root, "text", "APCost");
-		RegisterString(&extraData, root, "value", std::to_string(int(round(APCost))).c_str());
-		RegisterInt(&extraData, "difference", 0);
-		ListArrayItemCardInfoList.PushBack(&extraData);
-	}
-
 	// end of ur code
 
 	GFxValue haveExtraData;
@@ -314,9 +524,10 @@ bool RegisterScaleform(GFxMovieView * view, GFxValue * f4se_root)
 	if (movieRoot->GetVariable(&currentSWFPath, "root.loaderInfo.url")) {
 		currentSWFPathString = currentSWFPath.GetString();
 		//_MESSAGE("hooking %s", currentSWFPathString.c_str());
-		if (currentSWFPathString.find("HUDMenu.swf") != std::string::npos)
+		if (currentSWFPathString.find("ExamineMenu.swf") != std::string::npos)
 		{
-		//	_DMESSAGE("hooking HUDmenu");
+			_DMESSAGE("hooking ExamineMenu");
+
 
 		}
 	}
@@ -390,6 +601,7 @@ void OnF4SEMessage(F4SEMessagingInterface::Message* msg) {
 		_MESSAGE("kMessage_GameDataReady");
 		static auto pLoadGameHandler = new TESLoadGameHandler();
 		GetEventDispatcher<TESLoadGameEvent>()->AddEventSink(pLoadGameHandler);
+		ConditionDtype = reinterpret_cast<BGSDamageType*>(GetFormFromIdentifier("F4NVMaster.esm|332CB"));
 		//testreg();
 		//RegisterForInput(true);
 		break;
@@ -400,20 +612,7 @@ void OnF4SEMessage(F4SEMessagingInterface::Message* msg) {
 }
 
 
-bool GetScriptVariableValue(VMIdentifier* id, const char* varName, VMValue * outVal)
-{
-	if (id->m_typeInfo->memberData.unk00 == 3)
-	{
-		for (UInt32 i = 0; i < id->m_typeInfo->memberData.numMembers; ++i)
-		{
-			if (!_stricmp(id->m_typeInfo->properties->defs[i].propertyName.c_str(), varName))
-			{
-				return (*g_gameVM)->m_virtualMachine->GetPropertyValueByIndex(&id, i, outVal);
-			}
-		}
-	}
-	return false;
-}
+
 
 #include "f4se/PapyrusNativeFunctions.h"
 
@@ -449,11 +648,56 @@ public:
 };
 STATIC_ASSERT(sizeof(BGSSaveLoadManager) == 0x980);
 
+
+
 bool testfunk(StaticFunctionTag *base) {
 	_MESSAGE("testfunk");
-
-
 	Actor* playerref = *g_player;
+
+	RelocPtr<void*>g_pipboyInventoryData(0x5AF5B38);
+	typedef void(*_UpdateFunction1)(void* pipboyInventoryData, BGSInventoryItem* itemForCard);
+	RelocAddr <_UpdateFunction1> UpdateFunction1(0x0C10A40);
+	typedef void(*_UpdateFunction2)(void* pipboyInventoryData, UInt32 formType);
+	RelocAddr <_UpdateFunction2> UpdateFunction2(0x0C0F860);
+
+
+	EnterCriticalSection((LPCRITICAL_SECTION)(g_pipboyInventoryData.GetUIntPtr() + 0x60));
+	playerref->inventoryList->inventoryLock.LockForRead();
+	for (size_t i = 0; i < playerref->inventoryList->items.count; i++)
+	{
+		if (playerref->inventoryList->items[i].form->formType == kFormType_WEAP)
+		{
+			UpdateFunction1(g_pipboyInventoryData, &playerref->inventoryList->items[i]);
+		}
+	}
+	playerref->inventoryList->inventoryLock.Unlock();
+	UpdateFunction2(g_pipboyInventoryData, kFormType_WEAP);
+	LeaveCriticalSection((LPCRITICAL_SECTION)(g_pipboyInventoryData.GetUIntPtr() + 0x60));
+	
+
+	return true;
+	DumpClass(playerref->inventoryList, 0x80 / 8);
+
+	DumpClass(*g_itemMenuDataMgr, 0xD0 / 8);
+	if ((*g_itemMenuDataMgr)->unkArray10.entries) DumpClass((*g_itemMenuDataMgr)->unkArray10.entries, (*g_itemMenuDataMgr)->unkArray10.count); // EventSinks
+	if ((*g_itemMenuDataMgr)->unkArray28.entries) DumpClass((*g_itemMenuDataMgr)->unkArray28.entries, 20);
+	if ((*g_itemMenuDataMgr)->unkArray40.entries) DumpClass((*g_itemMenuDataMgr)->unkArray40.entries, 20);
+	if ((*g_itemMenuDataMgr)->unkArray68.entries) DumpClass((*g_itemMenuDataMgr)->unkArray68.entries, 20);
+	if ((*g_itemMenuDataMgr)->unkArray80.entries) DumpClass((*g_itemMenuDataMgr)->unkArray80.entries, 20);
+	if ((*g_itemMenuDataMgr)->unkArray98.entries) DumpClass((*g_itemMenuDataMgr)->unkArray98.entries, 20);
+	if ((*g_itemMenuDataMgr)->inventoryItems.entries) DumpClass((*g_itemMenuDataMgr)->inventoryItems.entries, 20);
+
+
+	return true;
+
+	DumpClass(*g_PipboyDataManager, 0xCC0 / 8);
+	return true;
+	RelocPtr<BGSKeyword*>kwd(0x05917A10);
+	_MESSAGE("kwd: %s", (*kwd)->keyword.c_str());
+	return true;
+	SetPlayerNameTest("new name");
+	return true;
+
 	playerref->inventoryList->inventoryLock.LockForRead();
 
 	for (size_t i = 0; i < playerref->inventoryList->items.count; i++)
@@ -484,16 +728,16 @@ bool testfunk(StaticFunctionTag *base) {
 							_MESSAGE("calculated data");
 							//DumpClass(objInst.data, 0x138/8);
 							weapData = (TESObjectWEAP::InstanceData*)objInst.data;
-							SimpleCollector<DamageInfo>		damageInfo{ 0, nullptr, 0, 0 };
+							SimpleCollector<DamageInfo>		damageInfo;// { 0, { NULL } };
 							InventoryItemStack				stack{ 0, 0, 0, stackDataList };
-							RelocAddr<void(*)(TESForm *&, InventoryItemStack &, SimpleCollector<DamageInfo>&)> CollectDamageInfo = 0xC0AB50; ///V1.10.106
+
 							CollectDamageInfo(form, stack, damageInfo);
 
-							for (size_t i = 0; i < damageInfo.count; ++i)
+							for (size_t i = 0; i < damageInfo.itemsArray.count; ++i)
 							{
-								if (damageInfo.info[i].damage != 0.0f)
+								if (damageInfo.itemsArray.entries[i].damage != 0.0f)
 								{
-									_MESSAGE("damageType %i value %f", damageInfo.info[i].type, damageInfo.info[i].damage);
+									_MESSAGE("damageType %i value %f", damageInfo.itemsArray.entries[i].type, damageInfo.itemsArray.entries[i].damage);
 								}
 							}
 
@@ -690,42 +934,7 @@ bool GetPropertyValue_Hook(void* param1, void* param2, void* param3, void* param
 
 }
 
-typedef UInt32(*_ScriptFunction_Invoke)(void* param1, void* param2, void* param3, void* param4, void* param5);
 
-RelocAddr <_ScriptFunction_Invoke> ScriptFunction_Invoke(0x0027D1C60);
-_ScriptFunction_Invoke ScriptFunction_Invoke_Original;
-
-struct unkxxx
-{
-	void* unk1;
-	void* unk2;
-};
-UInt32 ScriptFunction_Invoke_Hook(IFunction* param1, unkxxx* param2, void* param3, VirtualMachine* param4, VMState* param5) {
-	if (!_strcmpi("ModDrinkPoolAndUpdateThirstEffects", param1->GetName()->c_str()))
-	{
-		_MESSAGE("ModDrinkPoolAndUpdateThirstEffects");
-		// get drinkpool variable value
-	}
-	else if (!_strcmpi("ModFoodPoolAndUpdateHungerEffects", param1->GetName()->c_str()))
-	{
-		_MESSAGE("ModFoodPoolAndUpdateHungerEffects");
-		// get foodpool variable value
-	}
-	else if (!_strcmpi("ApplyEffect", param1->GetName()->c_str()))
-	{
-		_MESSAGE("ApplyEffect");
-
-		DumpClass(param2, 15);
-
-		DumpClass(param3, 10);
-
-		DumpClass(&param5, 10);
-
-	}
-
-	UInt32 result =  ScriptFunction_Invoke_Original(param1, param2, param3, param4, param5);
-	return result;
-}
 
 _WorkshopMenuProcessMessage WorkshopMenuProcessMessage_Original;
 
@@ -796,6 +1005,24 @@ bool OnWorkshopMenuButtonEvent_Hook(BSInputEventUser* eu, ButtonEvent * inputEve
 	return result;
 }
 
+void PRKFMessageHandler(F4SEMessagingInterface::Message* msg) {
+	_DMESSAGE("PRKFReadyMessage recieved raw");
+	switch (msg->type)
+	{
+	case PRKFReadyMessage::kMessage_PRKFReady:
+	{
+		_DMESSAGE("PRKFReadyMessage recieved");
+		PRKFAddDataMessage message;
+		message.ININame = "BEPerks";
+		message.INIVersion = 3;
+		message.disableVanillaPerks = 1;
+		message.PerksList = DYNAMIC_CAST(GetFormFromIdentifier("Be Exceptional.esp|44DED"), TESForm, BGSListForm);
+		message.SkillsList = DYNAMIC_CAST(GetFormFromIdentifier("Be Exceptional.esp|3C53B"), TESForm, BGSListForm);
+		g_messaging->Dispatch(g_pluginHandle, PRKFAddDataMessage::kMessage_PRKFAddData, (void*)&message, sizeof(PRKFAddDataMessage*), nullptr);
+	}
+	break;
+	}
+}
 
 #include "f4se/ObScript.h"
 #include "f4se_common/SafeWrite.h"
@@ -890,6 +1117,7 @@ extern "C"
 
 		logMessage("load");
 		g_messaging->RegisterListener(g_pluginHandle, "F4SE", OnF4SEMessage);
+		g_messaging->RegisterListener(g_pluginHandle, nullptr, PRKFMessageHandler);
 
 		if (!g_branchTrampoline.Create(1024 * 64))
 		{
@@ -986,30 +1214,7 @@ extern "C"
 		}
 
 
-		{
-			struct ScriptFunction_Invoke_Code : Xbyak::CodeGenerator {
-				ScriptFunction_Invoke_Code(void * buf) : Xbyak::CodeGenerator(4096, buf)
-				{
-					Xbyak::Label retnLabel;
 
-					sub(rsp, 0x28);
-					mov(rdx, ptr[rdx]);
-
-					jmp(ptr[rip + retnLabel]);
-
-					L(retnLabel);
-					dq(ScriptFunction_Invoke.GetUIntPtr() + 8);
-				}
-			};
-
-			void * codeBuf = g_localTrampoline.StartAlloc();
-			ScriptFunction_Invoke_Code code(codeBuf);
-			g_localTrampoline.EndAlloc(code.getCurr());
-
-			ScriptFunction_Invoke_Original = (_ScriptFunction_Invoke)codeBuf;
-
-			g_branchTrampoline.Write6Branch(ScriptFunction_Invoke.GetUIntPtr(), (uintptr_t)ScriptFunction_Invoke_Hook);
-		}
 
 		{
 			struct WorkshopMenuProcessMessage_Code : Xbyak::CodeGenerator {
@@ -1061,7 +1266,7 @@ extern "C"
 			g_branchTrampoline.Write6Branch(OnWorkshopMenuButtonEvent.GetUIntPtr(), (uintptr_t)OnWorkshopMenuButtonEvent_Hook);
 		}
 
-		{
+		/*{
 			struct PopulateItemCardInfoList_Code : Xbyak::CodeGenerator {
 				PopulateItemCardInfoList_Code(void * buf) : Xbyak::CodeGenerator(4096, buf)
 				{
@@ -1084,12 +1289,60 @@ extern "C"
 			PopulateItemCardInfoList_Original = (_PopulateItemCardInfoList)codeBuf;
 
 			g_branchTrampoline.Write6Branch(PopulateItemCardInfoList.GetUIntPtr(), (uintptr_t)PopulateItemCardInfoList_Hook);
+		}*/
+
+		/*{
+			struct ExamineMenu__DrawNextFrame_Code : Xbyak::CodeGenerator {
+				ExamineMenu__DrawNextFrame_Code(void * buf) : Xbyak::CodeGenerator(4096, buf)
+				{
+					Xbyak::Label retnLabel;
+
+					mov(ptr[rsp+0x10], rbx);
+
+					jmp(ptr[rip + retnLabel]);
+
+					L(retnLabel);
+					dq(ExamineMenu__DrawNextFrame.GetUIntPtr() + 5);
+				}
+			};
+
+			void * codeBuf = g_localTrampoline.StartAlloc();
+			ExamineMenu__DrawNextFrame_Code code(codeBuf);
+			g_localTrampoline.EndAlloc(code.getCurr());
+
+			ExamineMenu__DrawNextFrame_Original = (_ExamineMenu__DrawNextFrame)codeBuf;
+
+			g_branchTrampoline.Write5Branch(ExamineMenu__DrawNextFrame.GetUIntPtr(), (uintptr_t)ExamineMenu__DrawNextFrame_Hook);
+		}*/
+
+		{
+			struct mfg_execute_Code : Xbyak::CodeGenerator {
+				mfg_execute_Code(void * buf) : Xbyak::CodeGenerator(4096, buf)
+				{
+					Xbyak::Label retnLabel;
+
+					mov(ptr[rsp + 0x8], rbx);
+
+					jmp(ptr[rip + retnLabel]);
+
+					L(retnLabel);
+					dq(mfg_execute.GetUIntPtr() + 5);
+				}
+			};
+
+			void * codeBuf = g_localTrampoline.StartAlloc();
+			mfg_execute_Code code(codeBuf);
+			g_localTrampoline.EndAlloc(code.getCurr());
+
+			mfg_execute_Original = (ObScript_Execute)codeBuf;
+
+			g_branchTrampoline.Write5Branch(mfg_execute.GetUIntPtr(), (uintptr_t)mfg_execute_Hook);
 		}
 
 		unsigned char data[] = { 0x90, 0x90, 0x90, 0x90, 0x90 };
-		//SafeWriteBuf(RelocAddr<uintptr_t>(0x0B18586).GetUIntPtr(), &data, sizeof(data));
+		//SafeWriteBuf(RelocAddr<uintptr_t>(0xB8E6EF).GetUIntPtr(), &data, sizeof(data));
 		//g_branchTrampoline.Write5Call(wsm_secondAddress.GetUIntPtr(), (uintptr_t)myReplacingFunction);
-		ExamineMenu__Invoke_Original = HookUtil::SafeWrite64(ExamineMenu__Invoke_HookTarget.GetUIntPtr(), &ExamineMenu__Invoke_Hook);
+		//ExamineMenu__Invoke_Original = HookUtil::SafeWrite64(ExamineMenu__Invoke_HookTarget.GetUIntPtr(), &ExamineMenu__Invoke_Hook);
 
 		return true;
 	}

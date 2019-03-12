@@ -972,7 +972,7 @@ void tracePipboyObject(PipboyObject* obj)
 };
 
 
-RelocPtr <void*> g_itemMenuDataMgr(0x0590DA00);
+RelocPtr <ItemMenuDataManager*> g_itemMenuDataMgr(0x0590DA00);
 RelocAddr <_getInventoryItemByHandleID> getInventoryItemByHandleID(0x001A3650);
 
 BGSInventoryItem* getInventoryItemByIndex(UInt32 index)
@@ -1183,3 +1183,93 @@ void DumpClassX(void * theClassPtr, UInt64 nIntsToDump)
 
 
 RelocAddr<_CalcInstanceData>			CalcInstanceData(0x2F7A30);
+
+
+bool GetScriptVariableValue(VMIdentifier* id, const char* varName, VMValue * outVal)
+{
+	if (id->m_typeInfo->memberData.unk00 == 3)
+	{
+		for (UInt32 i = 0; i < id->m_typeInfo->memberData.numMembers; ++i)
+		{
+			if (!_stricmp(id->m_typeInfo->properties->defs[i].propertyName.c_str(), varName))
+			{
+				return (*g_gameVM)->m_virtualMachine->GetPropertyValueByIndex(&id, i, outVal);
+			}
+		}
+	}
+	return false;
+}
+
+
+void traceVMValueType(UInt64 val)
+{
+	switch (val)
+	{
+	case VMValue::kType_None:
+		_MESSAGE("VMValue type: kType_None");
+		break;
+	case VMValue::kType_Identifier:
+		_MESSAGE("VMValue type: kType_Identifier");
+		break;
+	case VMValue::kType_String:
+		_MESSAGE("VMValue type: kType_String");
+		break;
+	case VMValue::kType_Int:
+		_MESSAGE("VMValue type: kType_Int");
+		break;
+	case VMValue::kType_Float:
+		_MESSAGE("VMValue type: kType_Float");
+		break;
+	case VMValue::kType_Bool:
+		_MESSAGE("VMValue type: kType_Bool");
+		break;
+	case VMValue::kType_Variable:
+		_MESSAGE("VMValue type: kType_Variable");
+		break;
+	case VMValue::kType_Struct:
+		_MESSAGE("VMValue type: kType_Variable");
+		break;
+	case VMValue::kType_IdentifierArray:
+		_MESSAGE("VMValue type: kType_IdentifierArray");
+		break;
+	case VMValue::kType_StringArray:
+		_MESSAGE("VMValue type: kType_StringArray");
+		break;
+	case VMValue::kType_IntArray:
+		_MESSAGE("VMValue type: kType_IntArray");
+		break;
+	case VMValue::kType_FloatArray:
+		_MESSAGE("VMValue type: kType_FloatArray");
+		break;
+	case VMValue::kType_BoolArray:
+		_MESSAGE("VMValue type: kType_BoolArray");
+		break;
+	case VMValue::kType_VariableArray:
+		_MESSAGE("VMValue type: kType_VariableArray");
+		break;
+	case VMValue::kType_StructArray:
+		_MESSAGE("VMValue type: kType_StructArray");
+		break;
+	default:
+		break;
+	}
+}
+
+void traceVMValue(VMValue* val)
+{
+	if (val->IsComplexArrayType())
+	{
+		_MESSAGE("VMValue IsComplexArrayType");
+	}
+	else if (val->IsComplexType())
+	{
+		_MESSAGE("VMValue IsComplexType");
+		traceVMValueType(val->type.id->GetType());
+		//DumpClass(val->data.p, 10);
+		//DumpClass(val->type.id, 0x20 / 8);
+	}
+	else
+	{
+		traceVMValueType(val->type.value);
+	}
+}
