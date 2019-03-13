@@ -42,7 +42,6 @@ bool RegisterFuncs(VirtualMachine* vm)
 	vm->SetFunctionFlags("UsefulFunctions", "GetCameraState", IFunction::kFunctionFlag_NoWait);
 	vm->RegisterFunction(
 		new NativeFunction0 <StaticFunctionTag, void>("UpdateThirdPerson", "UsefulFunctions", UpdateThirdPerson, vm));
-	vm->SetFunctionFlags("UsefulFunctions", "UpdateThirdPerson", IFunction::kFunctionFlag_NoWait);
 	return true;
 }
 
