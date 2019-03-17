@@ -5,7 +5,6 @@
 
 std::string mName = "XDI_Demo";
 UInt32 mVer = 1;
-IDebugLog	gLog;
 
 PluginHandle			    g_pluginHandle = kPluginHandle_Invalid;
 

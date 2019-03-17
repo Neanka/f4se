@@ -366,6 +366,7 @@ void LevelIncrease__Event_Dispatcher_Init()
 {
 	LevelIncrease__Event_Dispatcher_address = RVA <BSTEventDispatcher<LevelIncrease::Event>*>(
 		"LevelIncrease__Event_Dispatcher_address", {
+			{ RUNTIME_VERSION_1_10_130, 0x00EC3020 },
 			{ RUNTIME_VERSION_1_10_120, 0x00EC3020 },
 			{ RUNTIME_VERSION_1_10_114, 0x00EC3020 },
 			{ RUNTIME_VERSION_1_10_111, 0x00EC3020 },
@@ -624,6 +625,7 @@ void TESContainerChangedEvent_Dispatcher_Init()
 {
 	TESContainerChangedEvent_Dispatcher_address = RVA <BSTEventDispatcher<TESContainerChangedEvent>*>(
 		"TESContainerChangedEvent_Dispatcher_address", {
+			{ RUNTIME_VERSION_1_10_130, 0x00442390 },
 			{ RUNTIME_VERSION_1_10_120, 0x00442390 },
 			{ RUNTIME_VERSION_1_10_114, 0x00442390 },
 			{ RUNTIME_VERSION_1_10_111, 0x00442390 },
@@ -653,6 +655,7 @@ void TESEquipEvent_Dispatcher_Init()
 {
 	TESEquipEvent_Dispatcher_address = RVA <BSTEventDispatcher<TESEquipEvent>*>(
 		"TESEquipEvent_Dispatcher_address", {
+			{ RUNTIME_VERSION_1_10_130, 0x00442750 },
 			{ RUNTIME_VERSION_1_10_120, 0x00442750 },
 			{ RUNTIME_VERSION_1_10_114, 0x00442750 },
 			{ RUNTIME_VERSION_1_10_111, 0x00442750 },

@@ -120,12 +120,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\papfunctions.cpp" />
+    <ClCompile Include="..\Shared.cpp" />
     <ClCompile Include="..\sscan\Pattern.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\papfunctions.h" />
-    <ClInclude Include="..\Shared.h" />
     <ClInclude Include="..\sscan\Pattern.h" />
     <ClInclude Include="consts.h" />
     <ClInclude Include="main.h" />

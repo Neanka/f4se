@@ -205,6 +205,7 @@ void InitWSMAddresses()
 {
 	g_rootWorkshopEntry = RVA <WorkshopEntry*>(
 		"g_rootWorkshopEntry", {
+			{ RUNTIME_VERSION_1_10_130, 0x058E0860 },
 			{ RUNTIME_VERSION_1_10_114, 0x059198E0 },
 			{ RUNTIME_VERSION_1_10_111, 0x059198E0 },
 			{ RUNTIME_VERSION_1_10_106, 0x059198E0 },
@@ -212,36 +213,42 @@ void InitWSMAddresses()
 	// put into plugin load: g_rootWorkshopEntry.SetEffective(g_rootWorkshopEntry.GetUIntPtr()-0x10);
 	g_workshopDepth = RVA <UInt16>(
 		"g_workshopDepth", {
+			{ RUNTIME_VERSION_1_10_130, 0x058DF5DC },
 			{ RUNTIME_VERSION_1_10_114, 0x0591865C },
 			{ RUNTIME_VERSION_1_10_111, 0x0591865C },
 			{ RUNTIME_VERSION_1_10_106, 0x0591865C },
 		}, WSM_SIG, 18, 4, 8);
 	GetSelectedWorkshopEntry = RVA <_GetSelectedWorkshopEntry>(
 		"GetSelectedWorkshopEntry", {
+			{ RUNTIME_VERSION_1_10_130, 0x001F8C20 },
 			{ RUNTIME_VERSION_1_10_114, 0x001F8C20 },
 			{ RUNTIME_VERSION_1_10_111, 0x001F8C20 },
 			{ RUNTIME_VERSION_1_10_106, 0x001F8C20 },
 		}, "48 89 5C 24 08 45 33 C9 4C 8B C2");
 	OnWorkshopMenuButtonEvent = RVA <_OnWorkshopMenuButtonEvent>(
 		"OnWorkshopMenuButtonEvent", {
+			{ RUNTIME_VERSION_1_10_130, 0x00BEFD60 },
 			{ RUNTIME_VERSION_1_10_114, 0x00BEFD60 },
 			{ RUNTIME_VERSION_1_10_111, 0x00BEFD60 },
 			{ RUNTIME_VERSION_1_10_106, 0x00BEFD60 },
 		}, "48 8B C4 55 41 56 41 57 48 8D A8 28 FF FF FF");
 	WorkshopMenuProcessMessage = RVA <_WorkshopMenuProcessMessage>(
 		"WorkshopMenuProcessMessage", {
+			{ RUNTIME_VERSION_1_10_130, 0x00BEF4C0 },
 			{ RUNTIME_VERSION_1_10_114, 0x00BEF4C0 },
 			{ RUNTIME_VERSION_1_10_111, 0x00BEF4C0 },
 			{ RUNTIME_VERSION_1_10_106, 0x00BEF4C0 },
 		}, "48 89 5C 24 08 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 70 FF FF FF");
 	wsm_firstAddress = RVA <uintptr_t>(
 		"wsm_firstAddress", {
+			{ RUNTIME_VERSION_1_10_130, 0x00BF1B90 },
 			{ RUNTIME_VERSION_1_10_114, 0x00BF1B90 },
 			{ RUNTIME_VERSION_1_10_111, 0x00BF1B90 },
 			{ RUNTIME_VERSION_1_10_106, 0x00BF1B90 },
 		}, WSM_SIG1, 30);
 	wsm_secondAddress = RVA <uintptr_t>(
 		"wsm_secondAddress", {
+			{ RUNTIME_VERSION_1_10_130, 0x00BF1B7F },
 			{ RUNTIME_VERSION_1_10_114, 0x00BF1B7F },
 			{ RUNTIME_VERSION_1_10_111, 0x00BF1B7F },
 			{ RUNTIME_VERSION_1_10_106, 0x00BF1B7F },
@@ -252,6 +259,7 @@ void InitExeAddress()
 {
 	ExecuteCommand = RVA <_ExecuteCommand>(
 		"ExecuteCommand", {
+			{ RUNTIME_VERSION_1_10_130, 0x0125B380 },
 			{ RUNTIME_VERSION_1_10_120, 0x0125B380 },
 			{ RUNTIME_VERSION_1_10_114, 0x0125B380 },
 			{ RUNTIME_VERSION_1_10_111, 0x0125B380 },
@@ -292,6 +300,7 @@ void InitAddresses()
 {
 	HasPerk = RVA <_HasPerk>(
 		"HasPerk", {
+			{ RUNTIME_VERSION_1_10_130, 0x00DA64E0 },
 			{ RUNTIME_VERSION_1_10_120, 0x00DA64E0 },
 			{ RUNTIME_VERSION_1_10_114, 0x00DA64E0 },
 			{ RUNTIME_VERSION_1_10_111, 0x00DA64E0 },
@@ -309,6 +318,7 @@ void InitAddresses()
 		}, "48 83 EC 28 48 8B 81 00 03 00 00 48 85 C0 74 ? 4C 8B C2");
 	AddPerk = RVA <_AddPerk>(
 		"AddPerk", {
+			{ RUNTIME_VERSION_1_10_130, 0x00DA60E0 },
 			{ RUNTIME_VERSION_1_10_120, 0x00DA60E0 },
 			{ RUNTIME_VERSION_1_10_114, 0x00DA60E0 },
 			{ RUNTIME_VERSION_1_10_111, 0x00DA60E0 },
@@ -326,6 +336,7 @@ void InitAddresses()
 		}, "48 89 5C 24 08 48 89 6C 24 10 56 57 41 56 48 83 EC 40 48 8D 99 34 04 00 00");
 	GetLevel = RVA <_GetLevel>(
 		"GetLevel", {
+			{ RUNTIME_VERSION_1_10_130, 0x00D79D70 },
 			{ RUNTIME_VERSION_1_10_120, 0x00D79D70 },
 			{ RUNTIME_VERSION_1_10_114, 0x00D79D70 },
 			{ RUNTIME_VERSION_1_10_111, 0x00D79D70 },
@@ -343,6 +354,7 @@ void InitAddresses()
 		}, "48 8B 89 E0 00 00 00 48 83 C1 68 E9 ? ? ? ?");
 	GetItemCount = RVA <_GetItemCount>(
 		"GetItemCount", {
+			{ RUNTIME_VERSION_1_10_130, 0x013FB5E0 },
 			{ RUNTIME_VERSION_1_10_120, 0x013FB5E0 },
 			{ RUNTIME_VERSION_1_10_114, 0x013FB5E0 },
 			{ RUNTIME_VERSION_1_10_111, 0x013FB5E0 },
@@ -360,6 +372,7 @@ void InitAddresses()
 		}, "48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57 48 83 EC 40 49 8B F9 41 0F B6 E8");
 	g_main = RVA <uintptr_t>(
 		"g_main", {
+			{ RUNTIME_VERSION_1_10_130, 0x05AA4248 },
 			{ RUNTIME_VERSION_1_10_120, 0x05ADD2C8 },
 			{ RUNTIME_VERSION_1_10_114, 0x05ADD2C8 },
 			{ RUNTIME_VERSION_1_10_111, 0x05ADD2C8 },
@@ -384,6 +397,7 @@ void InitAddresses()
 	}, "48 8B 15 ? ? ? ? 48 8D 0D ? ? ? ? 48 83 C2 10", 0, 3, 7);*/ // added in 1 10 75 into f4se
 	GetRandomPercent = RVA <_GetRandomPercent>(
 		"GetRandomPercent", {
+			{ RUNTIME_VERSION_1_10_130, 0x01B12B60 },
 			{ RUNTIME_VERSION_1_10_120, 0x01B12B60 },
 			{ RUNTIME_VERSION_1_10_114, 0x01B12B60 },
 			{ RUNTIME_VERSION_1_10_111, 0x01B12B60 },
@@ -398,6 +412,7 @@ void InitAddresses()
 		}, "40 53 48 83 EC 20 8B D9 83 F9 01");
 	GetRandomPercent2 = RVA <_GetRandomPercent2>(
 		"GetRandomPercent2", {
+			{ RUNTIME_VERSION_1_10_130, 0x01B12C00 },
 			{ RUNTIME_VERSION_1_10_120, 0x01B12C00 },
 			{ RUNTIME_VERSION_1_10_114, 0x01B12C00 },
 			{ RUNTIME_VERSION_1_10_111, 0x01B12C00 },
@@ -412,6 +427,7 @@ void InitAddresses()
 		}, "48 89 5C 24 08 57 48 83 EC 20 8B DA 8B F9");
 	SetPerkPoints_int = RVA <_SetPerkPoints_int>(
 		"SetPerkPoints_int", {
+			{ RUNTIME_VERSION_1_10_130, 0x00EB8A80 },
 			{ RUNTIME_VERSION_1_10_120, 0x00EB8A80 },
 			{ RUNTIME_VERSION_1_10_114, 0x00EB8A80 },
 			{ RUNTIME_VERSION_1_10_111, 0x00EB8A80 },
@@ -425,6 +441,7 @@ void InitAddresses()
 		}, "48 83 EC 28 88 91 F1 0C 00 00");
 	LevelupMenuProcessMessage = RVA <_LevelupMenuProcessMessage>(
 		"LevelupMenuProcessMessage", {
+			{ RUNTIME_VERSION_1_10_130, 0x00B383C0 },
 			{ RUNTIME_VERSION_1_10_120, 0x00B383C0 },
 			{ RUNTIME_VERSION_1_10_114, 0x00B383C0 },
 			{ RUNTIME_VERSION_1_10_111, 0x00B383C0 },
@@ -438,6 +455,7 @@ void InitAddresses()
 		}, "48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 40 48 8B F1 8B 4A 10");
 	LevelupMenuPlayPerkSound = RVA <_LevelupMenuPlayPerkSound>(
 		"LevelupMenuPlayPerkSound", {
+			{ RUNTIME_VERSION_1_10_130, 0x00B397B0 },
 			{ RUNTIME_VERSION_1_10_120, 0x00B397B0 },
 			{ RUNTIME_VERSION_1_10_114, 0x00B397B0 },
 			{ RUNTIME_VERSION_1_10_111, 0x00B397B0 },
@@ -451,6 +469,7 @@ void InitAddresses()
 		}, "48 89 5C 24 08 57 48 83 EC 30 48 8B F9 8B CA 33 DB E8 ? ? ? ? 48 85 C0 74 ? 80 78 1A 5F 75 ? 48 8B 98 88 00 00 00 48 81 C7 80 01 00 00");
 	LevelupMenuStopPerkSound = RVA <_LevelupMenuStopPerkSound>(
 		"LevelupMenuStopPerkSound", {
+			{ RUNTIME_VERSION_1_10_130, 0x01AC7FF0 },
 			{ RUNTIME_VERSION_1_10_120, 0x01AC7FF0 },
 			{ RUNTIME_VERSION_1_10_114, 0x01AC7FF0 },
 			{ RUNTIME_VERSION_1_10_111, 0x01AC7FF0 },
@@ -464,6 +483,7 @@ void InitAddresses()
 		}, "40 53 48 83 EC 20 8B 19 83 FB FF 74 ? C6 41 05 02");
 	g_PipboyDataManager = RVA <PipboyDataManager*>(
 		"g_PipboyDataManager", {
+			{ RUNTIME_VERSION_1_10_130, 0x058D0AF0 },
 			{ RUNTIME_VERSION_1_10_120, 0x05909B70 },
 			{ RUNTIME_VERSION_1_10_114, 0x05909B70 },
 			{ RUNTIME_VERSION_1_10_111, 0x05909B70 },
@@ -478,6 +498,7 @@ void InitAddresses()
 		}, "48 8B 0D ? ? ? ? 48 8D 44 24 48 48 8D 54 24 20 48 89 44 24 20 48 8D 44 24 50 48 81 C1 E8 08 00 00 ", 0, 3, 7);
 	GetSoundByName = RVA <_GetSoundByName>(
 		"_GetSoundByName", {
+			{ RUNTIME_VERSION_1_10_130, 0x0082F5E0 },
 			{ RUNTIME_VERSION_1_10_120, 0x0082F5E0 },
 			{ RUNTIME_VERSION_1_10_114, 0x0082F5E0 },
 			{ RUNTIME_VERSION_1_10_111, 0x0082F5E0 },
@@ -485,6 +506,7 @@ void InitAddresses()
 		}, "E8 ? ? ? ? 48 85 C0 74 ? C7 44 24 68 FF FF FF FF", 0, 1, 5);
 	LevelupMenuPlaySound_funk1 = RVA <_LevelupMenuPlaySound_funk1>(
 		"_LevelupMenuPlaySound_funk1", {
+			{ RUNTIME_VERSION_1_10_130, 0x01ACA4B0 },
 			{ RUNTIME_VERSION_1_10_120, 0x01ACA4B0 },
 			{ RUNTIME_VERSION_1_10_114, 0x01ACA4B0 },
 			{ RUNTIME_VERSION_1_10_111, 0x01ACA4B0 },
@@ -492,6 +514,7 @@ void InitAddresses()
 		}, "48 8B C4 48 89 58 08 48 89 68 10 48 89 70 18 57 41 54 41 55 41 56 41 57 48 81 EC A0 00 00 00 44 8B 0D ? ? ? ?");
 	LevelupMenuPlaySound_funk2 = RVA <_LevelupMenuPlaySound_funk2>(
 		"_LevelupMenuPlaySound_funk2", {
+			{ RUNTIME_VERSION_1_10_130, 0x01AC7F20 },
 			{ RUNTIME_VERSION_1_10_120, 0x01AC7F20 },
 			{ RUNTIME_VERSION_1_10_114, 0x01AC7F20 },
 			{ RUNTIME_VERSION_1_10_111, 0x01AC7F20 },
@@ -499,6 +522,7 @@ void InitAddresses()
 		}, "40 53 48 83 EC 20 8B 19 83 FB FF 74 ? C6 41 05 01");
 	LevelupMenuPlaySound_var1 = RVA <void*>(
 		"LevelupMenuPlaySound_var1", {
+			{ RUNTIME_VERSION_1_10_130, 0x05B0D188 },
 			{ RUNTIME_VERSION_1_10_120, 0x05B46208 },
 			{ RUNTIME_VERSION_1_10_114, 0x05B46208 },
 			{ RUNTIME_VERSION_1_10_111, 0x05B46208 },
@@ -511,6 +535,7 @@ void InitUIManager()
 {
 	UI_AddMessage = RVA <_UI_AddMessage>(
 		"UI_AddMessage", {
+			{ RUNTIME_VERSION_1_10_130, 0x0204CA70 },
 			{ RUNTIME_VERSION_1_10_120, 0x0204CA70 },
 			{ RUNTIME_VERSION_1_10_114, 0x0204CA70 },
 			{ RUNTIME_VERSION_1_10_111, 0x0204CA70 },
@@ -528,6 +553,7 @@ void InitUIManager()
 		}, "48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 48 89 7C 24 20 41 54 41 56 41 57 48 83 EC 20 44 8B 0D ? ? ? ? 65 48 8B 04 25 58 00 00 00 48 8B E9 4A 8B 34 C8 B9 C0 09 00 00");
 	g_UIManager = RVA <void*>(
 		"g_UIManager", {
+			{ RUNTIME_VERSION_1_10_130, 0x058D0AC8 },
 			{ RUNTIME_VERSION_1_10_120, 0x05909B48 },
 			{ RUNTIME_VERSION_1_10_114, 0x05909B48 },
 			{ RUNTIME_VERSION_1_10_111, 0x05909B48 },
@@ -549,6 +575,7 @@ void InitCWAddresses()
 {
 	MultiActivateMenuProcessMessage = RVA <_MultiActivateMenuProcessMessage>(
 		"MultiActivateMenuProcessMessage", {
+			{ RUNTIME_VERSION_1_10_130, 0x00B7B8A0 },
 			{ RUNTIME_VERSION_1_10_120, 0x00B7B8A0 },
 			{ RUNTIME_VERSION_1_10_114, 0x00B7B8A0 },
 			{ RUNTIME_VERSION_1_10_111, 0x00B7B8A0 },
@@ -561,6 +588,7 @@ void InitCWAddresses()
 		}, "48 83 EC 28 44 8B 42 10 41 FF C8 41 83 F8 01");
 	g_multiActivateManager = RVA <MultiActivateManager*>(
 		"g_multiActivateManager", {
+			{ RUNTIME_VERSION_1_10_130, 0x05A65AD0 },
 			{ RUNTIME_VERSION_1_10_120, 0x05A9EB50 },
 			{ RUNTIME_VERSION_1_10_114, 0x05A9EB50 },
 			{ RUNTIME_VERSION_1_10_111, 0x05A9EB50 },
@@ -573,6 +601,7 @@ void InitCWAddresses()
 		}, "48 8B 0D ? ? ? ? 48 8D 95 80 03 00 00", 0, 3, 7);
 	commandTargetCompanionRef = RVA <UInt32*>(
 		"commandTargetCompanionRef", {
+			{ RUNTIME_VERSION_1_10_130, 0x05A6001C },
 			{ RUNTIME_VERSION_1_10_120, 0x05A9909C },
 			{ RUNTIME_VERSION_1_10_114, 0x05A9909C },
 			{ RUNTIME_VERSION_1_10_111, 0x05A9909C },
@@ -585,6 +614,7 @@ void InitCWAddresses()
 		}, "48 89 7C 24 38 48 C7 44 24 20 00 00 00 00 4C 89 74 24 30", -7, 3, 7);
 	CompanionListenerUnk03 = RVA <_CompanionListenerUnk03>(
 		"CompanionListenerUnk03", {
+			{ RUNTIME_VERSION_1_10_130, 0x009FFAC0 },
 			{ RUNTIME_VERSION_1_10_120, 0x009FFAC0 },
 			{ RUNTIME_VERSION_1_10_114, 0x009FFAC0 },
 			{ RUNTIME_VERSION_1_10_111, 0x009FFAC0 },
@@ -597,6 +627,7 @@ void InitCWAddresses()
 		}, "48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 50 8B FA");
 	EquipItem_int = RVA <_EquipItem_int>(
 		"EquipItem_int", {
+			{ RUNTIME_VERSION_1_10_130, 0x00E1BBB0 },
 			{ RUNTIME_VERSION_1_10_120, 0x00E1BBB0 },
 			{ RUNTIME_VERSION_1_10_114, 0x00E1BBB0 },
 			{ RUNTIME_VERSION_1_10_111, 0x00E1BBB0 },
@@ -609,6 +640,7 @@ void InitCWAddresses()
 		}, "4C 8B DC 49 89 53 10 55 56 41 54 41 57");
 	UnEquipItem_int = RVA <_UnEquipItem_int>(
 		"UnEquipItem_int", {
+			{ RUNTIME_VERSION_1_10_130, 0x00E1BF90 },
 			{ RUNTIME_VERSION_1_10_120, 0x00E1BF90 },
 			{ RUNTIME_VERSION_1_10_114, 0x00E1BF90 },
 			{ RUNTIME_VERSION_1_10_111, 0x00E1BF90 },
@@ -621,6 +653,7 @@ void InitCWAddresses()
 		}, "48 8B C4 48 89 58 18 55 57 41 56 48 83 EC 70");
 	unk_itemManager = RVA <void*>(
 		"unk_itemManager", {
+			{ RUNTIME_VERSION_1_10_130, 0x059D7598 },
 			{ RUNTIME_VERSION_1_10_120, 0x05A10618 },
 			{ RUNTIME_VERSION_1_10_114, 0x05A10618 },
 			{ RUNTIME_VERSION_1_10_111, 0x05A10618 },
@@ -972,7 +1005,7 @@ void tracePipboyObject(PipboyObject* obj)
 };
 
 
-RelocPtr <ItemMenuDataManager*> g_itemMenuDataMgr(0x0590DA00);
+RelocPtr <ItemMenuDataManager*> g_itemMenuDataMgr(0x0590DA00);  // 48 8B FA 48 8B D9 74 ? 48 8B D1   0x11, 3, 8);
 RelocAddr <_getInventoryItemByHandleID> getInventoryItemByHandleID(0x001A3650);
 
 BGSInventoryItem* getInventoryItemByIndex(UInt32 index)

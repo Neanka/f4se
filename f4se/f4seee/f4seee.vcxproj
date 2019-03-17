@@ -120,6 +120,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Shared.cpp" />
     <ClCompile Include="..\sscan\Pattern.cpp" />
     <ClCompile Include="f4seeeEvents.cpp" />
     <ClCompile Include="f4seeePapyrus.cpp" />
@@ -138,14 +139,8 @@
     <None Include="exports.def" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\common\common_vc14.vcxproj">
-      <Project>{d4c128a1-73dc-4941-a453-ce55af239ba8}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\f4se\f4se.vcxproj">
       <Project>{a236f69d-8ff9-4491-ac5f-45bf49448bbe}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\f4se_common\f4se_common_vc14.vcxproj">
-      <Project>{20c6411c-596f-4b85-be4e-8bc91f59d8a6}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

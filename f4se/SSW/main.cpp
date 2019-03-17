@@ -15,10 +15,10 @@ F4SEPapyrusInterface			* g_papyrus = NULL;
 #include "f4se_common/BranchTrampoline.h"
 #include "f4se_common/SafeWrite.h"
 
-#define ScriptFunctionReg_HookTarget_ADDRESS 0x27B24F1
-#define ScriptFunctionReg_Original_ADDRESS 0x27D1820
-#define ScriptFunction_Invoke_HookTarget_ADDRESS 0x30AF590
-#define Message_Show_ADDRESS 0x13AEF60
+#define ScriptFunctionReg_HookTarget_ADDRESS 0x278D421 // E8 ? ? ? ? EB ? 49 8B C4 48 8B 95 08 01 00 00 
+#define ScriptFunctionReg_Original_ADDRESS 0x27AC750
+#define ScriptFunction_Invoke_HookTarget_ADDRESS 0x30835A0 // Unk_OF()
+#define Message_Show_ADDRESS 0x13AEF60 // 89 54 24 10 55 53 57 41 54 41 56 41 57 48 8D 6C 24 88 
 #define PlayerDifficultySettingChangedEventDispatcher_ADDRESS 0x00EC3340
 
 int numMenus = 0; // for widget hiding
@@ -123,6 +123,21 @@ ActorValueInfo* HC_SleepEffect = nullptr;
 #define HC_HungerEffect_FormID 0x855
 #define HC_ThirstEffect_FormID 0x868
 #define HC_SleepEffect_FormID 0x828
+
+UInt32 GetDifficulty()
+{
+	UInt32 result;
+
+	result = GetINISetting("iDifficulty:GamePlay")->data.u32;
+	if (result > 6)
+		goto LABEL_8;
+	if (result < 0)
+		return 0;
+	if (result >= 5)
+		LABEL_8:
+	result = (GetINISetting("bStroud:GamePlay")->data.u8 != 0) + 5;
+	return result;
+}
 
 class SSW_Menu : public GameMenuBase
 {
@@ -398,7 +413,11 @@ void FindHCScriptIdentifier()
 EventResult	TESLoadGameHandler::ReceiveEvent(TESLoadGameEvent * evn, void * dispatcher)
 {
 	_DMESSAGE("TESLoadGameEvent recieved");
-	SSW_Menu::OpenMenu();
+	isSurvival = (GetDifficulty() == 6);
+	if (isSurvival)
+	{
+		SSW_Menu::OpenMenu();
+	}	
 	FindHCScriptIdentifier();
 	return kEvent_Continue;
 }
@@ -408,14 +427,7 @@ DECLARE_EVENT_DISPATCHER(PlayerDifficultySettingChanged::Event, PlayerDifficulty
 EventResult	DifficultyChangedHandler::ReceiveEvent(PlayerDifficultySettingChanged::Event * evn, void * dispatcher)
 {
 	_DMESSAGE("PlayerDifficultySettingChanged::Event recieved");
-	if (evn->to == 6)
-	{
-		isSurvival = true;
-	}
-	else
-	{
-		isSurvival = false;
-	}
+	isSurvival = (evn->to == 6);
 	if (numMenus > 0 || !isSurvival)
 	{
 		SSW_Menu::CloseMenu();
@@ -427,11 +439,14 @@ EventResult	DifficultyChangedHandler::ReceiveEvent(PlayerDifficultySettingChange
 	return kEvent_Continue;
 }
 
+
+
 EventResult	MenuOpenCloseHandler::ReceiveEvent(MenuOpenCloseEvent * evn, void * dispatcher)
 {
 	//_DMESSAGE("MenuOpenCloseEvent recieved %s, %d", evn->menuName.c_str(),evn->isOpen);
 	if (!_strcmpi("ContainerMenu", evn->menuName.c_str()) || !_strcmpi("BarterMenu", evn->menuName.c_str()) || !_strcmpi("ExamineMenu", evn->menuName.c_str()) || !_strcmpi("WorkshopMenu", evn->menuName.c_str()) || !_strcmpi("Workshop_CaravanMenu", evn->menuName.c_str()) || !_strcmpi("LevelUpMenu", evn->menuName.c_str()) || !_strcmpi("BookMenu", evn->menuName.c_str()) || !_strcmpi("CookingMenu", evn->menuName.c_str()))
 	{
+
 		if (evn->isOpen)
 		{
 			numMenus++;

@@ -32,6 +32,7 @@ void RegisterDataReadyEvents()
 	//REGISTER_EVENT(TESCellFullyLoadedEvent, g_f4seeeTESCellFullyLoadedEventSink);									// 030
 	//REGISTER_EVENT(TESCellReadyToApplyDecalsEvent, g_f4seeeTESCellReadyToApplyDecalsEventSink);					// 031
 	REGISTER_EVENT(TESCombatEvent_x, g_f4seeeTESCombatEvent_xSink);													// 032
+	REGISTER_EVENT(ActorItemEquipped::Event, g_f4seeeActorItemEquipped__EventSink);									// unk1
 	
 }
 
@@ -126,9 +127,9 @@ extern "C"
 
 		// Check game version
 		if (f4se->runtimeVersion != RUNTIME_VERSION_1_10_64) {
-			_WARNING("WARNING: Unsupported runtime version %08X. This DLL is built for v1.10.64 only.", f4se->runtimeVersion);
-			MessageBox(NULL, (LPCSTR)("Unsupported runtime version (expected v1.10.64). \n" + mName + " will be disabled.").c_str(), (LPCSTR)mName.c_str(), MB_OK | MB_ICONEXCLAMATION);
-			return false;
+			//_WARNING("WARNING: Unsupported runtime version %08X. This DLL is built for v1.10.64 only.", f4se->runtimeVersion);
+			//MessageBox(NULL, (LPCSTR)("Unsupported runtime version (expected v1.10.64). \n" + mName + " will be disabled.").c_str(), (LPCSTR)mName.c_str(), MB_OK | MB_ICONEXCLAMATION);
+			//return false;
 		}
 
 		// Get the scaleform interface

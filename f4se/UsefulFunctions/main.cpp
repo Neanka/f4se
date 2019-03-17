@@ -6,42 +6,21 @@ UInt32 mVer = 1;
 PluginHandle			    g_pluginHandle = kPluginHandle_Invalid;
 F4SEPapyrusInterface		*g_papyrus = NULL;
 
-#include "f4se/GameCamera.h"
-typedef void(*_ThirdPersonCameraState_UpdateMode)(TESCameraState* state, bool weaponDrawn);
-RelocAddr <_ThirdPersonCameraState_UpdateMode> ThirdPersonCameraState_UpdateMode(0x1251CC0);
 
-bool IsWeaponDrawn()
-{
-	return (((*g_player)->actorState.flags >> 1) & 7) >= 3;
+
+
+
+void exe(StaticFunctionTag *base, BSFixedString str) {
+	logMessage("exe");
+	ExecuteCommand(str);
 }
-
-SInt32 GetCameraState(StaticFunctionTag * base)
-{
-	PlayerCamera * playerCamera = *g_playerCamera;
-	if (playerCamera) {
-		for (int i = 0; i < PlayerCamera::kNumCameraStates; i++) {
-			if (playerCamera->cameraState == playerCamera->cameraStates[i])
-				return i;
-		}
-	}
-	return -1;
-}
-
-void UpdateThirdPerson(StaticFunctionTag * base)
-{
-	ThirdPersonCameraState_UpdateMode((*g_playerCamera)->cameraStates[PlayerCamera::kCameraState_ThirdPerson2], IsWeaponDrawn());
-}
-
 
 #include "f4se/PapyrusNativeFunctions.h"
 
 bool RegisterFuncs(VirtualMachine* vm)
 {
 	vm->RegisterFunction(
-		new NativeFunction0 <StaticFunctionTag, SInt32>("GetCameraState", "UsefulFunctions", GetCameraState, vm));
-	vm->SetFunctionFlags("UsefulFunctions", "GetCameraState", IFunction::kFunctionFlag_NoWait);
-	vm->RegisterFunction(
-		new NativeFunction0 <StaticFunctionTag, void>("UpdateThirdPerson", "UsefulFunctions", UpdateThirdPerson, vm));
+		new NativeFunction1 <StaticFunctionTag, void, BSFixedString>("exe", "UsefulFunctions", exe, vm));
 	return true;
 }
 
@@ -96,6 +75,8 @@ extern "C"
 	bool F4SEPlugin_Load(const F4SEInterface *f4se)
 	{
 		logMessage("load");
+		InitExeAddress();
+		RVAManager::UpdateAddresses(f4se->runtimeVersion);
 		if (g_papyrus)
 		{
 			g_papyrus->Register(RegisterFuncs);

@@ -15,24 +15,6 @@ F4SEScaleformInterface		*g_scaleform = NULL;
 F4SEPapyrusInterface		*g_papyrus = NULL;
 F4SEMessagingInterface		*g_messaging = NULL;
 
-#include "ObScript.h"
-RelocAddr <ObScript_Execute> mfg_execute(0x05265A0);
-ObScript_Execute mfg_execute_Original;
-
-bool mfg_execute_Hook(void * paramInfo, void * scriptData, TESObjectREFR * thisObj, void * containingObj, void * scriptObj, void * locals, double * result, void * opcodeOffsetPtr) {
-	_MESSAGE("mfg_execute_Hook");
-	//_MESSAGE("thisObj name %s", thisObj->baseForm->GetFullName());
-	DumpClass(paramInfo, 10);
-	DumpClass(scriptData, 10);
-	DumpClass(thisObj, 10);
-	DumpClass(containingObj, 10);
-	DumpClass(scriptObj, 0x80/8);
-	DumpClass(locals, 20);
-	DumpClass(result, 1);
-	DumpClass(opcodeOffsetPtr, 10);
-	//_MESSAGE("Script name %s", ((TESForm*)*locals)->GetFullName());
-	return mfg_execute_Original(paramInfo, scriptData, thisObj, containingObj, scriptObj, locals, result, opcodeOffsetPtr);
-}
 
 // 0x0C0FDD0 pipboyitemcard update
 
@@ -599,9 +581,9 @@ void OnF4SEMessage(F4SEMessagingInterface::Message* msg) {
 	switch (msg->type) {
 	case F4SEMessagingInterface::kMessage_GameDataReady:
 		_MESSAGE("kMessage_GameDataReady");
-		static auto pLoadGameHandler = new TESLoadGameHandler();
-		GetEventDispatcher<TESLoadGameEvent>()->AddEventSink(pLoadGameHandler);
-		ConditionDtype = reinterpret_cast<BGSDamageType*>(GetFormFromIdentifier("F4NVMaster.esm|332CB"));
+		//static auto pLoadGameHandler = new TESLoadGameHandler();
+		//GetEventDispatcher<TESLoadGameEvent>()->AddEventSink(pLoadGameHandler);
+		//ConditionDtype = reinterpret_cast<BGSDamageType*>(GetFormFromIdentifier("F4NVMaster.esm|332CB"));
 		//testreg();
 		//RegisterForInput(true);
 		break;
@@ -652,9 +634,29 @@ STATIC_ASSERT(sizeof(BGSSaveLoadManager) == 0x980);
 
 bool testfunk(StaticFunctionTag *base) {
 	_MESSAGE("testfunk");
+	RelocPtr<void*>g_pipboyInventoryData(0x5ABCAB8); // 130
+	_MESSAGE("address 0x%016I64X", (uintptr_t)&(*g_PipboyDataManager)->inventoryData +0x60);
+	_MESSAGE("address 0x%016I64X", g_pipboyInventoryData.GetUIntPtr() + 0x60);
+	return true;
 	Actor* playerref = *g_player;
 
-	RelocPtr<void*>g_pipboyInventoryData(0x5AF5B38);
+	_MESSAGE("flags08 0x%016I64X flags0C 0x%016I64X", (*g_player)->actorState.unk08, (*g_player)->actorState.flags);
+	return true;
+	TESObjectARMO* arm = DYNAMIC_CAST(LookupFormByID(0x976B3), TESForm, TESObjectARMO);
+	if (arm)
+	{
+		DumpClass(arm, 0x2E0/8);
+
+		DumpClass((void*)((uintptr_t)arm + 0x1A0), 10);
+		DumpClass(*(void**)((uintptr_t)arm+0x1A8), 40);
+		_MESSAGE("%s",arm->raceForm.race->models[0].GetModelName());
+		_MESSAGE("%s", arm->raceForm.race->models[1].GetModelName());
+		_MESSAGE("%s", arm->raceForm.race->unk120[0].GetModelName());
+		_MESSAGE("%s", arm->raceForm.race->unk120[1].GetModelName());
+	}
+	return true;
+
+
 	typedef void(*_UpdateFunction1)(void* pipboyInventoryData, BGSInventoryItem* itemForCard);
 	RelocAddr <_UpdateFunction1> UpdateFunction1(0x0C10A40);
 	typedef void(*_UpdateFunction2)(void* pipboyInventoryData, UInt32 formType);
@@ -1140,6 +1142,8 @@ extern "C"
 			_ERROR("couldn't create codegen buffer. this is fatal. skipping remainder of init process.");
 			return false;
 		}
+
+		/*
 		{
 			struct ContainerMenuInvoke_Code : Xbyak::CodeGenerator {
 				ContainerMenuInvoke_Code(void * buf) : Xbyak::CodeGenerator(4096, buf)
@@ -1266,6 +1270,9 @@ extern "C"
 			g_branchTrampoline.Write6Branch(OnWorkshopMenuButtonEvent.GetUIntPtr(), (uintptr_t)OnWorkshopMenuButtonEvent_Hook);
 		}
 
+
+		*/
+
 		/*{
 			struct PopulateItemCardInfoList_Code : Xbyak::CodeGenerator {
 				PopulateItemCardInfoList_Code(void * buf) : Xbyak::CodeGenerator(4096, buf)
@@ -1314,30 +1321,6 @@ extern "C"
 
 			g_branchTrampoline.Write5Branch(ExamineMenu__DrawNextFrame.GetUIntPtr(), (uintptr_t)ExamineMenu__DrawNextFrame_Hook);
 		}*/
-
-		{
-			struct mfg_execute_Code : Xbyak::CodeGenerator {
-				mfg_execute_Code(void * buf) : Xbyak::CodeGenerator(4096, buf)
-				{
-					Xbyak::Label retnLabel;
-
-					mov(ptr[rsp + 0x8], rbx);
-
-					jmp(ptr[rip + retnLabel]);
-
-					L(retnLabel);
-					dq(mfg_execute.GetUIntPtr() + 5);
-				}
-			};
-
-			void * codeBuf = g_localTrampoline.StartAlloc();
-			mfg_execute_Code code(codeBuf);
-			g_localTrampoline.EndAlloc(code.getCurr());
-
-			mfg_execute_Original = (ObScript_Execute)codeBuf;
-
-			g_branchTrampoline.Write5Branch(mfg_execute.GetUIntPtr(), (uintptr_t)mfg_execute_Hook);
-		}
 
 		unsigned char data[] = { 0x90, 0x90, 0x90, 0x90, 0x90 };
 		//SafeWriteBuf(RelocAddr<uintptr_t>(0xB8E6EF).GetUIntPtr(), &data, sizeof(data));
