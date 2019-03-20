@@ -1006,7 +1006,7 @@ void tracePipboyObject(PipboyObject* obj)
 
 
 RelocPtr <ItemMenuDataManager*> g_itemMenuDataMgr(0x0590DA00);  // 48 8B FA 48 8B D9 74 ? 48 8B D1   0x11, 3, 8);
-RelocAddr <_getInventoryItemByHandleID> getInventoryItemByHandleID(0x001A3650);
+RelocAddr <_getInventoryItemByHandleID> getInventoryItemByHandleID(0x001A3650); // 1 10 106 !!!
 
 BGSInventoryItem* getInventoryItemByIndex(UInt32 index)
 {
@@ -1161,7 +1161,7 @@ void traceGFxValue(GFxValue* fxv)
 	}
 };
 
-RelocAddr <uintptr_t> s_ExtraPoisonVtbl(0x02C7C468);
+RelocAddr <uintptr_t> s_ExtraPoisonVtbl(0x02C7C468); // 1 10 106 !!!
 
 ExtraPoison* ExtraPoison::Create(AlchemyItem* poison)
 {

@@ -388,10 +388,12 @@ public:
 	UInt64	unk2D8[(0x300-0x2D8)/8];	// 2D8
 
 	// Lots of misc data goes here, equipping, perks, etc
+	// E8
 	struct MiddleProcess
 	{
 		void * unk00;	// 00
 
+		// 4C0
 		struct Data08
 		{
 			UInt64	unk00[0x280 >> 3];		// 000
@@ -426,7 +428,25 @@ public:
 			UInt16	unk496;				// 496 - somekind of dirty flag?
 		};
 
+		// 5A0
+		struct Data10
+		{
+
+		};
+
+		// 60
+		struct Data58
+		{
+
+		};
+
 		Data08 * unk08;	// 08
+		Data10 * unk10;	// 08
+		void * unk18;	// 08
+		TESForm * unk20;	// 08
+		void * unk28;	// 08
+		void * unk30;	// 08
+		void * unk38;	// 08
 
 		MEMBER_FN_PREFIX(MiddleProcess);
 		DEFINE_MEMBER_FN(UpdateEquipment, void, 0x00E60740, Actor * actor, UInt32 flags); 

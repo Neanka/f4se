@@ -16,6 +16,10 @@ F4SEPapyrusInterface		*g_papyrus = NULL;
 F4SEMessagingInterface		*g_messaging = NULL;
 
 
+typedef bool(*_IsWaiting)(Actor* actor);
+
+RelocAddr <_IsWaiting> IsWaiting(0x00D72700);
+
 // 0x0C0FDD0 pipboyitemcard update
 
 // 590DA80  BGSInventoryItemEvent event dispatcher
@@ -630,17 +634,33 @@ public:
 };
 STATIC_ASSERT(sizeof(BGSSaveLoadManager) == 0x980);
 
-
-
 bool testfunk(StaticFunctionTag *base) {
 	_MESSAGE("testfunk");
-	RelocPtr<void*>g_pipboyInventoryData(0x5ABCAB8); // 130
-	_MESSAGE("address 0x%016I64X", (uintptr_t)&(*g_PipboyDataManager)->inventoryData +0x60);
-	_MESSAGE("address 0x%016I64X", g_pipboyInventoryData.GetUIntPtr() + 0x60);
-	return true;
+
 	Actor* playerref = *g_player;
 
-	_MESSAGE("flags08 0x%016I64X flags0C 0x%016I64X", (*g_player)->actorState.unk08, (*g_player)->actorState.flags);
+	TESObjectREFR* ref = NULL;
+
+	UInt32 * handle = commandTargetCompanionRef;
+	_MESSAGE("handle %I32u\t\thex: 0x%016I64X", handle, handle);
+
+	if (*handle != 0 && *handle != (*g_invalidRefHandle)) {
+		LookupREFRByHandle(handle, &ref);
+	}
+
+	if (ref)
+	{
+		_MESSAGE("IsWaiting %d", IsWaiting((Actor*)ref));
+		DumpClass(((Actor*)ref)->middleProcess, 10);
+		DumpClass(((Actor*)ref)->middleProcess->unk08, 20);
+		DumpClass(((Actor*)ref)->middleProcess->unk20, 0xC8 / 8);
+
+		DumpClass(((Actor*)ref)->middleProcess->unk10, 0x5A0/8);
+	}
+	
+
+
+	//_MESSAGE("flags08 0x%016I64X flags0C 0x%016I64X", (*g_player)->actorState.unk08, (*g_player)->actorState.flags);
 	return true;
 	TESObjectARMO* arm = DYNAMIC_CAST(LookupFormByID(0x976B3), TESForm, TESObjectARMO);
 	if (arm)
@@ -656,6 +676,10 @@ bool testfunk(StaticFunctionTag *base) {
 	}
 	return true;
 
+	RelocPtr<void*>g_pipboyInventoryData(0x5ABCAB8); // 130
+	_MESSAGE("address 0x%016I64X", (uintptr_t)&(*g_PipboyDataManager)->inventoryData + 0x60);
+	_MESSAGE("address 0x%016I64X", g_pipboyInventoryData.GetUIntPtr() + 0x60);
+	return true;
 
 	typedef void(*_UpdateFunction1)(void* pipboyInventoryData, BGSInventoryItem* itemForCard);
 	RelocAddr <_UpdateFunction1> UpdateFunction1(0x0C10A40);
@@ -1093,6 +1117,7 @@ extern "C"
 	{
 		InitAddresses();
 		InitWSMAddresses();
+		InitCWAddresses();
 		RVAManager::UpdateAddresses(f4se->runtimeVersion);
 		g_rootWorkshopEntry.SetEffective(g_rootWorkshopEntry.GetUIntPtr()-0x10);
 		if (false)

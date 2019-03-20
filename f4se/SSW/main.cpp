@@ -214,6 +214,45 @@ public:
 			ValueToSet.SetInt(iShowTextStatus);
 			root->SetVariable("root.Menu_mc.iShowTextStatus", &ValueToSet);
 
+			ValueToSet.SetNumber(fFoodBarX);
+			root->SetVariable("root.Menu_mc.fFoodBarX", &ValueToSet);
+			ValueToSet.SetNumber(fFoodBarY);
+			root->SetVariable("root.Menu_mc.fFoodBarY", &ValueToSet);
+			ValueToSet.SetNumber(fFoodBarScaleX);
+			root->SetVariable("root.Menu_mc.fFoodBarScaleX", &ValueToSet);
+			ValueToSet.SetNumber(fFoodBarScaleY);
+			root->SetVariable("root.Menu_mc.fFoodBarScaleY", &ValueToSet);
+			ValueToSet.SetNumber(fFoodBarRotation);
+			root->SetVariable("root.Menu_mc.fFoodBarRotation", &ValueToSet);
+			ValueToSet.SetInt(iFoodBarVisible);
+			root->SetVariable("root.Menu_mc.iFoodBarVisible", &ValueToSet);
+
+			ValueToSet.SetNumber(fDrinkBarX);
+			root->SetVariable("root.Menu_mc.fDrinkBarX", &ValueToSet);
+			ValueToSet.SetNumber(fDrinkBarY);
+			root->SetVariable("root.Menu_mc.fDrinkBarY", &ValueToSet);
+			ValueToSet.SetNumber(fDrinkBarScaleX);
+			root->SetVariable("root.Menu_mc.fDrinkBarScaleX", &ValueToSet);
+			ValueToSet.SetNumber(fDrinkBarScaleY);
+			root->SetVariable("root.Menu_mc.fDrinkBarScaleY", &ValueToSet);
+			ValueToSet.SetNumber(fDrinkBarRotation);
+			root->SetVariable("root.Menu_mc.fDrinkBarRotation", &ValueToSet);
+			ValueToSet.SetInt(iDrinkBarVisible);
+			root->SetVariable("root.Menu_mc.iDrinkBarVisible", &ValueToSet);
+
+			ValueToSet.SetNumber(fSleepBarX);
+			root->SetVariable("root.Menu_mc.fSleepBarX", &ValueToSet);
+			ValueToSet.SetNumber(fSleepBarY);
+			root->SetVariable("root.Menu_mc.fSleepBarY", &ValueToSet);
+			ValueToSet.SetNumber(fSleepBarScaleX);
+			root->SetVariable("root.Menu_mc.fSleepBarScaleX", &ValueToSet);
+			ValueToSet.SetNumber(fSleepBarScaleY);
+			root->SetVariable("root.Menu_mc.fSleepBarScaleY", &ValueToSet);
+			ValueToSet.SetNumber(fSleepBarRotation);
+			root->SetVariable("root.Menu_mc.fSleepBarRotation", &ValueToSet);
+			ValueToSet.SetInt(iSleepBarVisible);
+			root->SetVariable("root.Menu_mc.iSleepBarVisible", &ValueToSet);
+
 			root->Invoke("root.Menu_mc.UpdateModSettings", nullptr, nullptr, 0);
 			break;
 		}
@@ -355,6 +394,45 @@ public:
 		args->result->SetMember("iShowTextStatus", &ValueToSet);
 		ValueToSet.SetInt(iColored);
 		args->result->SetMember("iColored", &ValueToSet);
+
+		ValueToSet.SetNumber(fFoodBarX);
+		args->result->SetMember("fFoodBarX", &ValueToSet);
+		ValueToSet.SetNumber(fFoodBarY);
+		args->result->SetMember("fFoodBarY", &ValueToSet);
+		ValueToSet.SetNumber(fFoodBarScaleX);
+		args->result->SetMember("fFoodBarScaleX", &ValueToSet);
+		ValueToSet.SetNumber(fFoodBarScaleY);
+		args->result->SetMember("fFoodBarScaleY", &ValueToSet);
+		ValueToSet.SetNumber(fFoodBarRotation);
+		args->result->SetMember("fFoodBarRotation", &ValueToSet);
+		ValueToSet.SetInt(iFoodBarVisible);
+		args->result->SetMember("iFoodBarVisible", &ValueToSet);
+
+		ValueToSet.SetNumber(fDrinkBarX);
+		args->result->SetMember("fDrinkBarX", &ValueToSet);
+		ValueToSet.SetNumber(fDrinkBarY);
+		args->result->SetMember("fDrinkBarY", &ValueToSet);
+		ValueToSet.SetNumber(fDrinkBarScaleX);
+		args->result->SetMember("fDrinkBarScaleX", &ValueToSet);
+		ValueToSet.SetNumber(fDrinkBarScaleY);
+		args->result->SetMember("fDrinkBarScaleY", &ValueToSet);
+		ValueToSet.SetNumber(fDrinkBarRotation);
+		args->result->SetMember("fDrinkBarRotation", &ValueToSet);
+		ValueToSet.SetInt(iDrinkBarVisible);
+		args->result->SetMember("iDrinkBarVisible", &ValueToSet);
+
+		ValueToSet.SetNumber(fSleepBarX);
+		args->result->SetMember("fSleepBarX", &ValueToSet);
+		ValueToSet.SetNumber(fSleepBarY);
+		args->result->SetMember("fSleepBarY", &ValueToSet);
+		ValueToSet.SetNumber(fSleepBarScaleX);
+		args->result->SetMember("fSleepBarScaleX", &ValueToSet);
+		ValueToSet.SetNumber(fSleepBarScaleY);
+		args->result->SetMember("fSleepBarScaleY", &ValueToSet);
+		ValueToSet.SetNumber(fSleepBarRotation);
+		args->result->SetMember("fSleepBarRotation", &ValueToSet);
+		ValueToSet.SetInt(iSleepBarVisible);
+		args->result->SetMember("iSleepBarVisible", &ValueToSet);
 	}
 };
 
