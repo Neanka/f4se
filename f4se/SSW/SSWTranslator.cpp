@@ -8,6 +8,7 @@
 
 #include "f4se/ScaleformState.h"
 #include "f4se/ScaleformTranslator.h"
+#include "Globals.h"
 
 // This file is adapted from f4se/Translation.cpp.
 

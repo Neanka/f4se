@@ -1,5 +1,6 @@
 #include "main.h"
 #include "SSWTranslator.h"
+#include "Globals.h"
 
 std::string mName = "SSW";
 UInt32 mVer = 1;
@@ -153,7 +154,7 @@ public:
 
 	SSW_Menu() : GameMenuBase()
 	{
-		flags = kFlag_DoNotPreventGameSave | kFlag_DisableInteractive | kFlag_Unk800000 | kFlag_ApplyDropDownFilter | kFlag_DoNotDeleteOnClose;
+		flags = kFlag_DoNotPreventGameSave | kFlag_DisableInteractive | kFlag_Unk800000 | kFlag_ApplyDropDownFilter | kFlag_DoNotDeleteOnClose;// | 0x40000 | 0x80000 | 0x200000;
 		depth = 0x6;
 		if (CALL_MEMBER_FN((*g_scaleformManager), LoadMovie)(this, this->movie, "SSW_Menu", "root1.Menu_mc", 2))
 		{
@@ -198,7 +199,6 @@ public:
 		case kMessage_UpdateModSettings:
 		{
 			_MESSAGE("UpdateModSettings");
-
 			ValueToSet.SetInt(iColored);
 			root->SetVariable("root.Menu_mc.iColored", &ValueToSet);
 
@@ -473,14 +473,45 @@ void FindHCScriptIdentifier()
 
 	if (hcScriptIdentifier)
 	{
+		/*if (hcScriptIdentifier->m_typeInfo->memberData.unk00 == 3)
+		{
+			_MESSAGE("Members:");
+			gLog.Indent();
+			for (UInt32 i = 0; i < hcScriptIdentifier->m_typeInfo->memberData.numMembers; ++i)
+			{
+				if (strstr(hcScriptIdentifier->m_typeInfo->properties->defs[i].propertyName.c_str(),"FoodPool"))
+				{
+					_MESSAGE("%s", hcScriptIdentifier->m_typeInfo->properties->defs[i].propertyName.c_str());
+					DumpClass((void*)((uintptr_t)hcScriptIdentifier + 0x10 * (i + 3)), 2);
+				}
+			}
+			gLog.Outdent();
+		}*/
+
 		if (GetScriptVariableValue(hcScriptIdentifier, "::iDrinkPoolSeverelyDehydratedAmount_var", &tempvar))
 		{
-			iDrinkPoolSeverelyDehydratedAmount = tempvar.data.i;
+			if (tempvar.type.value == VMValue::kType_Int)
+			{
+				iDrinkPoolSeverelyDehydratedAmount = tempvar.data.i;
+			}
+			else if (tempvar.type.value == VMValue::kType_Float)
+			{
+				iDrinkPoolSeverelyDehydratedAmount = (SInt32)tempvar.data.f;
+			}
+			//iDrinkPoolSeverelyDehydratedAmount = tempvar.data.i;
 			_MESSAGE("iDrinkPoolSeverelyDehydratedAmount %d", iDrinkPoolSeverelyDehydratedAmount);
 		}
 		if (GetScriptVariableValue(hcScriptIdentifier, "::iFoodPoolStarvingAmount_var", &tempvar))
 		{
-			iFoodPoolStarvingAmount = tempvar.data.i;
+			if (tempvar.type.value == VMValue::kType_Int)
+			{
+				iFoodPoolStarvingAmount = tempvar.data.i;
+			}
+			else if (tempvar.type.value == VMValue::kType_Float)
+			{
+				iFoodPoolStarvingAmount = (SInt32)tempvar.data.f;
+			}
+			//iFoodPoolStarvingAmount = tempvar.data.i;
 			_MESSAGE("iFoodPoolStarvingAmount %d", iFoodPoolStarvingAmount);
 		}
 		SSW_Menu::UpdateAmounts();
@@ -521,8 +552,28 @@ EventResult	DifficultyChangedHandler::ReceiveEvent(PlayerDifficultySettingChange
 
 EventResult	MenuOpenCloseHandler::ReceiveEvent(MenuOpenCloseEvent * evn, void * dispatcher)
 {
+	/*if (!_strcmpi("PauseMenu", evn->menuName.c_str()))
+	{
+		IMenu* menu = (*g_ui)->GetMenu(BSFixedString("PauseMenu"));
+		_MESSAGE("flags before 0x%016I64X", menu->flags);
+		menu->flags &= ~0x200;
+		SSW_Menu::SetFlags();
+		_MESSAGE("flags after 0x%016I64X", menu->flags);
+	}
+
+	if (!_strcmpi("PipboyMenu", evn->menuName.c_str()))
+	{
+		IMenu* menu = (*g_ui)->GetMenu(BSFixedString("PipboyMenu"));
+		_MESSAGE("flags PipboyMenu 0x%016I64X", menu->flags);
+	}*/
+
 	//_DMESSAGE("MenuOpenCloseEvent recieved %s, %d", evn->menuName.c_str(),evn->isOpen);
-	if (!_strcmpi("ContainerMenu", evn->menuName.c_str()) || !_strcmpi("BarterMenu", evn->menuName.c_str()) || !_strcmpi("ExamineMenu", evn->menuName.c_str()) || !_strcmpi("WorkshopMenu", evn->menuName.c_str()) || !_strcmpi("Workshop_CaravanMenu", evn->menuName.c_str()) || !_strcmpi("LevelUpMenu", evn->menuName.c_str()) || !_strcmpi("BookMenu", evn->menuName.c_str()) || !_strcmpi("CookingMenu", evn->menuName.c_str()))
+	if (!_strcmpi("ContainerMenu", evn->menuName.c_str()) || !_strcmpi("BarterMenu", evn->menuName.c_str()) || \
+		!_strcmpi("ExamineMenu", evn->menuName.c_str()) || !_strcmpi("WorkshopMenu", evn->menuName.c_str()) || \
+		!_strcmpi("Workshop_CaravanMenu", evn->menuName.c_str()) || !_strcmpi("LevelUpMenu", evn->menuName.c_str()) || \
+		!_strcmpi("BookMenu", evn->menuName.c_str()) || !_strcmpi("CookingMenu", evn->menuName.c_str()) || \
+		!_strcmpi("LoadingMenu", evn->menuName.c_str()) || (!_strcmpi("PipboyMenu", evn->menuName.c_str()) && !iShowInPipboy) \
+		)
 	{
 
 		if (evn->isOpen)
@@ -535,10 +586,13 @@ EventResult	MenuOpenCloseHandler::ReceiveEvent(MenuOpenCloseEvent * evn, void * 
 		}
 		if (numMenus > 0 || !isSurvival)
 		{
+			_DMESSAGE("CloseMenu");
 			SSW_Menu::CloseMenu();
 		}
 		else
 		{
+			_DMESSAGE("OpenMenu");
+			FindHCScriptIdentifier();
 			SSW_Menu::OpenMenu();
 		}
 	}
@@ -600,7 +654,7 @@ _Message_Show Message_Show_Original = nullptr;
 
 UInt32 Message_Show_Hook(VirtualMachine* vm, UInt32 stackId, BGSMessage* msg, float param1, float param2, float param3, float param4, float param5, float param6, float param7, float param8, float param9)
 {
-	_MESSAGE("Message_Show_Hook");
+	//_MESSAGE("Message_Show_Hook");
 	UInt32 result = 0;
 	switch (msg->formID)
 	{
@@ -697,12 +751,28 @@ void UpdateValues_int()
 	{
 		if (GetScriptVariableValue(hcScriptIdentifier, "FoodPool", &FoodPool))
 		{
-			iFoodPool = FoodPool.data.i;
+			if (FoodPool.type.value == VMValue::kType_Int)
+			{
+				iFoodPool = FoodPool.data.i;
+			}
+			else if (FoodPool.type.value == VMValue::kType_Float)
+			{
+				iFoodPool = (SInt32)FoodPool.data.f;
+			}
+			//iFoodPool = FoodPool.data.i;
 			_MESSAGE("FoodPool %d", iFoodPool);
 		}
 		if (GetScriptVariableValue(hcScriptIdentifier, "DrinkPool", &DrinkPool))
 		{
-			iDrinkPool = DrinkPool.data.i;
+			if (DrinkPool.type.value == VMValue::kType_Int)
+			{
+				iDrinkPool = DrinkPool.data.i;
+			}
+			else if (DrinkPool.type.value == VMValue::kType_Float)
+			{
+				iDrinkPool = (SInt32)DrinkPool.data.f;
+			}
+			//iDrinkPool = DrinkPool.data.i;
 			_MESSAGE("DrinkPool %d", iDrinkPool);
 		}
 		SSW_Menu::UpdateValues();
@@ -784,6 +854,9 @@ extern "C"
 	bool F4SEPlugin_Load(const F4SEInterface *f4se)
 	{
 		logMessage("load");
+		//InitAddresses();
+		G::Init();
+		RVAManager::UpdateAddresses(f4se->runtimeVersion);
 		if (CheckModDropClientService() == 0)
 		{
 			_WARNING("WARNING: ModDropClient found.");
