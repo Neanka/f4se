@@ -122,7 +122,6 @@
   <ItemGroup>
     <ClCompile Include="..\Shared.cpp" />
     <ClCompile Include="..\sscan\Pattern.cpp" />
-    <ClCompile Include="Globals.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="SSWTranslator.cpp" />
   </ItemGroup>
@@ -130,7 +129,6 @@
     <ClInclude Include="..\RVA.h" />
     <ClInclude Include="..\Shared.h" />
     <ClInclude Include="consts.h" />
-    <ClInclude Include="Globals.h" />
     <ClInclude Include="main.h" />
   </ItemGroup>
   <ItemGroup>

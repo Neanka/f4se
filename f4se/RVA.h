@@ -170,8 +170,16 @@ public:
 		init(addr, sig, offset, indirectOffset, instructionLength, name);
 	}
 
+	RVA(const char* name, const char* sig, int offset = 0, int indirectOffset = 0, int instructionLength = 0) {
+		init({}, sig, offset, indirectOffset, instructionLength, name);
+	}
+
 	RVA(const char* name, AddressMap addr, const char* sig, indirection indirections) {
-		init(addr, sig, 0, 0,0, name,indirections);
+		init(addr, sig, 0, 0, 0, name,indirections);
+	}
+
+	RVA(const char* name, const char* sig, indirection indirections) {
+		init({}, sig, 0, 0, 0, name, indirections);
 	}
 
     RVA(const char* sig, int offset, AddressMap addr) {

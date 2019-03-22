@@ -135,6 +135,8 @@ std::string PBT_GetConfigOptionString(std::string file, const char * section, st
 
 UInt32 PBT_GetConfigOptionInt(std::string file, const char * section, const char * key);
 
+void InitVIAddresses();
+
 // reg2k
 // 70
 template <typename T>
@@ -2154,3 +2156,24 @@ public:
 	void*								unk808;
 };
 STATIC_ASSERT(sizeof(ExamineMenu) == 0x810);
+
+#include "ScaleformLoader.h"
+// --------------------------------------------------------------
+// ------------------------------ VI ----------------------------
+// --------------------------------------------------------------
+
+extern RVA <BSScaleformManager*> x_g_scaleformManager;
+typedef bool(*_x_LoadMovie)(BSScaleformManager* manager, IMenu * menu, GFxMovieView *&, const char * name, const char * stagePath, UInt32 flags);
+extern RVA <_x_LoadMovie> x_LoadMovie;
+typedef void(*_x_CreateBaseShaderTarget)(BSGFxShaderFXTarget * & component, GFxValue & stage);
+extern RVA <_x_CreateBaseShaderTarget> x_CreateBaseShaderTarget;
+
+
+extern RVA <UI*> x_g_ui;
+typedef void(*_x_SendUIMessage)(UIMessageManager* manager, BSFixedString& menuName, unsigned int menuAction);
+extern RVA <_x_SendUIMessage> x_SendUIMessage;
+extern RVA <UIMessageManager*> x_g_uiMessageManager;
+
+// --------------------------------------------------------------
+// ------------------------------ VI ----------------------------
+// --------------------------------------------------------------
