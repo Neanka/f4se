@@ -1,6 +1,5 @@
 #include "main.h"
 #include "SSWTranslator.h"
-#include "Globals.h"
 
 std::string mName = "SSW";
 UInt32 mVer = 1;
@@ -473,21 +472,6 @@ void FindHCScriptIdentifier()
 
 	if (hcScriptIdentifier)
 	{
-		/*if (hcScriptIdentifier->m_typeInfo->memberData.unk00 == 3)
-		{
-			_MESSAGE("Members:");
-			gLog.Indent();
-			for (UInt32 i = 0; i < hcScriptIdentifier->m_typeInfo->memberData.numMembers; ++i)
-			{
-				if (strstr(hcScriptIdentifier->m_typeInfo->properties->defs[i].propertyName.c_str(),"FoodPool"))
-				{
-					_MESSAGE("%s", hcScriptIdentifier->m_typeInfo->properties->defs[i].propertyName.c_str());
-					DumpClass((void*)((uintptr_t)hcScriptIdentifier + 0x10 * (i + 3)), 2);
-				}
-			}
-			gLog.Outdent();
-		}*/
-
 		if (GetScriptVariableValue(hcScriptIdentifier, "::iDrinkPoolSeverelyDehydratedAmount_var", &tempvar))
 		{
 			if (tempvar.type.value == VMValue::kType_Int)
@@ -498,7 +482,6 @@ void FindHCScriptIdentifier()
 			{
 				iDrinkPoolSeverelyDehydratedAmount = (SInt32)tempvar.data.f;
 			}
-			//iDrinkPoolSeverelyDehydratedAmount = tempvar.data.i;
 			_MESSAGE("iDrinkPoolSeverelyDehydratedAmount %d", iDrinkPoolSeverelyDehydratedAmount);
 		}
 		if (GetScriptVariableValue(hcScriptIdentifier, "::iFoodPoolStarvingAmount_var", &tempvar))
@@ -511,7 +494,6 @@ void FindHCScriptIdentifier()
 			{
 				iFoodPoolStarvingAmount = (SInt32)tempvar.data.f;
 			}
-			//iFoodPoolStarvingAmount = tempvar.data.i;
 			_MESSAGE("iFoodPoolStarvingAmount %d", iFoodPoolStarvingAmount);
 		}
 		SSW_Menu::UpdateAmounts();
@@ -552,22 +534,6 @@ EventResult	DifficultyChangedHandler::ReceiveEvent(PlayerDifficultySettingChange
 
 EventResult	MenuOpenCloseHandler::ReceiveEvent(MenuOpenCloseEvent * evn, void * dispatcher)
 {
-	/*if (!_strcmpi("PauseMenu", evn->menuName.c_str()))
-	{
-		IMenu* menu = (*g_ui)->GetMenu(BSFixedString("PauseMenu"));
-		_MESSAGE("flags before 0x%016I64X", menu->flags);
-		menu->flags &= ~0x200;
-		SSW_Menu::SetFlags();
-		_MESSAGE("flags after 0x%016I64X", menu->flags);
-	}
-
-	if (!_strcmpi("PipboyMenu", evn->menuName.c_str()))
-	{
-		IMenu* menu = (*g_ui)->GetMenu(BSFixedString("PipboyMenu"));
-		_MESSAGE("flags PipboyMenu 0x%016I64X", menu->flags);
-	}*/
-
-	//_DMESSAGE("MenuOpenCloseEvent recieved %s, %d", evn->menuName.c_str(),evn->isOpen);
 	if (!_strcmpi("ContainerMenu", evn->menuName.c_str()) || !_strcmpi("BarterMenu", evn->menuName.c_str()) || \
 		!_strcmpi("ExamineMenu", evn->menuName.c_str()) || !_strcmpi("WorkshopMenu", evn->menuName.c_str()) || \
 		!_strcmpi("Workshop_CaravanMenu", evn->menuName.c_str()) || !_strcmpi("LevelUpMenu", evn->menuName.c_str()) || \
@@ -592,7 +558,7 @@ EventResult	MenuOpenCloseHandler::ReceiveEvent(MenuOpenCloseEvent * evn, void * 
 		else
 		{
 			_DMESSAGE("OpenMenu");
-			FindHCScriptIdentifier();
+			//FindHCScriptIdentifier();
 			SSW_Menu::OpenMenu();
 		}
 	}
@@ -759,7 +725,6 @@ void UpdateValues_int()
 			{
 				iFoodPool = (SInt32)FoodPool.data.f;
 			}
-			//iFoodPool = FoodPool.data.i;
 			_MESSAGE("FoodPool %d", iFoodPool);
 		}
 		if (GetScriptVariableValue(hcScriptIdentifier, "DrinkPool", &DrinkPool))
@@ -772,7 +737,6 @@ void UpdateValues_int()
 			{
 				iDrinkPool = (SInt32)DrinkPool.data.f;
 			}
-			//iDrinkPool = DrinkPool.data.i;
 			_MESSAGE("DrinkPool %d", iDrinkPool);
 		}
 		SSW_Menu::UpdateValues();
@@ -854,8 +818,7 @@ extern "C"
 	bool F4SEPlugin_Load(const F4SEInterface *f4se)
 	{
 		logMessage("load");
-		//InitAddresses();
-		G::Init();
+		InitVIAddresses();
 		RVAManager::UpdateAddresses(f4se->runtimeVersion);
 		if (CheckModDropClientService() == 0)
 		{
