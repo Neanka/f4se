@@ -15,14 +15,33 @@ F4SEPapyrusInterface			* g_papyrus = NULL;
 #include "f4se_common/BranchTrampoline.h"
 #include "f4se_common/SafeWrite.h"
 
+
 #define ScriptFunctionReg_HookTarget_ADDRESS 0x278D421 // E8 ? ? ? ? EB ? 49 8B C4 48 8B 95 08 01 00 00 
 #define ScriptFunctionReg_Original_ADDRESS 0x27AC750
 #define ScriptFunction_Invoke_HookTarget_ADDRESS 0x30835A0 // Unk_OF()
 #define Message_Show_ADDRESS 0x13AEF60 // 89 54 24 10 55 53 57 41 54 41 56 41 57 48 8D 6C 24 88 
-#define PlayerDifficultySettingChangedEventDispatcher_ADDRESS 0x00EC3340
+//#define PlayerDifficultySettingChangedEventDispatcher_ADDRESS 0x00EC3340
+
+typedef UInt32(*_Message_Show)(VirtualMachine* vm, UInt32 stackId, BGSMessage* msg, float param1, float param2, float param3, float param4, float param5, float param6, float param7, float param8, float param9);
+RelocAddr <_Message_Show> Message_Show(Message_Show_ADDRESS);
+_Message_Show Message_Show_Original = nullptr;
+
+
+typedef void*(*_ScriptFunctionReg)(ScriptFunction* param1, ScriptFunctionRegParam2* param2);
+RelocAddr <_ScriptFunctionReg> ScriptFunctionReg_HookTarget(ScriptFunctionReg_HookTarget_ADDRESS);
+RelocAddr <_ScriptFunctionReg> ScriptFunctionReg_Original(ScriptFunctionReg_Original_ADDRESS);
+
+typedef UInt32(*_ScriptFunction_Invoke)(ScriptFunction* param1, void* param2, void* param3, VirtualMachine* param4, UInt8 param5);
+RelocAddr <_ScriptFunction_Invoke> ScriptFunction_Invoke_HookTarget(ScriptFunction_Invoke_HookTarget_ADDRESS);
+_ScriptFunction_Invoke ScriptFunction_Invoke_Original;
+
+int numScriptsHook = 2; 
+int numScriptsHookCount = 0;
+TESQuest* HMO_quest = nullptr;
 
 int numMenus = 0; // for widget hiding
 bool isSurvival = false;
+bool isHMO = false;
 
 UInt8 iShowIcon = 1;
 UInt8 iShowPercents = 1;
@@ -108,13 +127,19 @@ void ReadSettings()
 
 VMIdentifier* hcScriptIdentifier = nullptr;
 
+VMIdentifier* HMOScriptIdentifier = nullptr;
+
 SInt32 iFoodPoolStarvingAmount = -256;
 
 SInt32 iDrinkPoolSeverelyDehydratedAmount = -180;
 
+SInt32 iSleepPoolIncapacitatedAmount = -6;
+
 SInt32 iFoodPool = 0;
 
 SInt32 iDrinkPool = 0;
+
+SInt32 iSleepPool = 0;
 
 ActorValueInfo* HC_HungerEffect = nullptr;
 ActorValueInfo* HC_ThirstEffect = nullptr;
@@ -136,6 +161,7 @@ UInt32 GetDifficulty()
 	if (result >= 5)
 		LABEL_8:
 	result = (GetINISetting("bStroud:GamePlay")->data.u8 != 0) + 5;
+	_MESSAGE("GetDifficulty: %d", result);
 	return result;
 }
 
@@ -198,6 +224,24 @@ public:
 		case kMessage_UpdateModSettings:
 		{
 			_MESSAGE("UpdateModSettings");
+
+			if (isHMO)
+			{
+				GFxValue arr;
+
+				root->GetVariable(&arr, "root.Menu_mc.trans_food_HMO");
+				root->SetVariable("root.Menu_mc.trans_food", &arr);
+
+				root->GetVariable(&arr, "root.Menu_mc.trans_drink_HMO");
+				root->SetVariable("root.Menu_mc.trans_drink", &arr);
+
+				root->GetVariable(&arr, "root.Menu_mc.trans_sleep_HMO");
+				root->SetVariable("root.Menu_mc.trans_sleep", &arr);
+
+				ValueToSet.SetInt(isHMO?1:0);
+				root->SetVariable("root.Menu_mc.isHMO", &ValueToSet);
+			}
+
 			ValueToSet.SetInt(iColored);
 			root->SetVariable("root.Menu_mc.iColored", &ValueToSet);
 
@@ -210,6 +254,11 @@ public:
 			ValueToSet.SetInt(iShowBar);
 			root->SetVariable("root.Menu_mc.iShowBar", &ValueToSet);
 
+			// TEMPORARY
+			//if (isHMO)
+			//{
+			//	iShowTextStatus = 0;
+			//}
 			ValueToSet.SetInt(iShowTextStatus);
 			root->SetVariable("root.Menu_mc.iShowTextStatus", &ValueToSet);
 
@@ -265,6 +314,16 @@ public:
 			ValueToSet.SetInt(iDrinkPool);
 			root->SetVariable("root.Menu_mc.iDrinkPool", &ValueToSet);
 
+			if (isHMO)
+			{
+				ValueToSet.SetInt(iSleepPool);
+			}
+			else
+			{
+				ValueToSet.SetInt(-(SInt32)(*g_player)->actorValueOwner.GetValue(HC_SleepEffect));
+			}			
+			root->SetVariable("root.Menu_mc.iSleepPool", &ValueToSet);
+
 			ValueToSet.SetInt((SInt32)(*g_player)->actorValueOwner.GetValue(HC_HungerEffect));
 			root->SetVariable("root.Menu_mc.iFoodStatus", &ValueToSet);
 
@@ -280,6 +339,9 @@ public:
 		case kMessage_UpdateAmounts:
 		{
 			_MESSAGE("UpdateAmounts");
+
+			ValueToSet.SetInt(iSleepPoolIncapacitatedAmount);
+			root->SetVariable("root.Menu_mc.iSleepPoolIncapacitatedAmount", &ValueToSet);
 
 			ValueToSet.SetInt(iFoodPoolStarvingAmount);
 			root->SetVariable("root.Menu_mc.iFoodPoolStarvingAmount", &ValueToSet);
@@ -347,9 +409,6 @@ public:
 		_DMESSAGE("RegisterMenu %s", (*g_ui)->IsMenuRegistered(menuName) ? "registered" : "not registered");
 	}
 };
-
-
-#include "f4se/PapyrusNativeFunctions.h"
 
 bool SSWtestfunk(StaticFunctionTag *base) {
 	_MESSAGE("SSWtestfunk");
@@ -464,14 +523,12 @@ void FindHCScriptIdentifier()
 	IObjectHandlePolicy * hp = (*g_gameVM)->m_virtualMachine->GetHandlePolicy();
 	UInt64 hdl = hp->Create(hc->kTypeID, hc);
 	(*g_gameVM)->m_virtualMachine->GetObjectIdentifier(hdl, "Hardcore:HC_ManagerScript", 1, &hcScriptIdentifier, 0);
-	if (hcScriptIdentifier) _MESSAGE("Hardcore:HC_ManagerScript script identifier found");
-
-
-
+	
 	VMValue tempvar;
 
 	if (hcScriptIdentifier)
 	{
+		_MESSAGE("Hardcore:HC_ManagerScript script identifier found");
 		if (GetScriptVariableValue(hcScriptIdentifier, "::iDrinkPoolSeverelyDehydratedAmount_var", &tempvar))
 		{
 			if (tempvar.type.value == VMValue::kType_Int)
@@ -501,35 +558,70 @@ void FindHCScriptIdentifier()
 	}
 }
 
+void FindHMOScriptIdentifier()
+{
+	HMOScriptIdentifier = nullptr;
+	IObjectHandlePolicy * hp = (*g_gameVM)->m_virtualMachine->GetHandlePolicy();
+	UInt64 hdl = hp->Create(HMO_quest->kTypeID, HMO_quest);
+	(*g_gameVM)->m_virtualMachine->GetObjectIdentifier(hdl, "HMO_CoreSCRIPT", 1, &HMOScriptIdentifier, 0);
+
+	if (HMOScriptIdentifier)
+	{
+		_MESSAGE("HMO_CoreSCRIPT script identifier found");
+		iFoodPoolStarvingAmount = -1000;
+		iDrinkPoolSeverelyDehydratedAmount= -1000;
+		iSleepPoolIncapacitatedAmount = -1000;
+		SSW_Menu::UpdateModSettings();
+	}
+
+}
+
 EventResult	TESLoadGameHandler::ReceiveEvent(TESLoadGameEvent * evn, void * dispatcher)
 {
 	_DMESSAGE("TESLoadGameEvent recieved");
 	isSurvival = (GetDifficulty() == 6);
-	if (isSurvival)
+	if (isSurvival && isHMO)
 	{
+		_WARNING("isSurvival & isHMO at the same time!");
+	}
+	if (isHMO)
+	{
+		_DMESSAGE("OpenMenu from TESLoadGameHandler");
 		SSW_Menu::OpenMenu();
-	}	
-	FindHCScriptIdentifier();
+		FindHMOScriptIdentifier();
+	}
+	else if(isSurvival)
+	{
+		_DMESSAGE("OpenMenu from TESLoadGameHandler");
+		SSW_Menu::OpenMenu();
+		FindHCScriptIdentifier();
+	}
 	return kEvent_Continue;
 }
 
+/*
 DECLARE_EVENT_DISPATCHER(PlayerDifficultySettingChanged::Event, PlayerDifficultySettingChangedEventDispatcher_ADDRESS)
 
 EventResult	DifficultyChangedHandler::ReceiveEvent(PlayerDifficultySettingChanged::Event * evn, void * dispatcher)
 {
-	_DMESSAGE("PlayerDifficultySettingChanged::Event recieved");
+	_DMESSAGE("PlayerDifficultySettingChanged::Event recieved from: %d to: %d", evn->from, evn->to);
+	if (!gameLoaded)
+	{
+		return kEvent_Continue;
+	}
 	isSurvival = (evn->to == 6);
 	if (numMenus > 0 || !isSurvival)
 	{
 		SSW_Menu::CloseMenu();
 	}
-	else
+	else if (isSurvival)
 	{
+		_DMESSAGE("OpenMenu from DifficultyChangedHandler");
 		SSW_Menu::OpenMenu();
 	}
 	return kEvent_Continue;
 }
-
+*/
 
 
 EventResult	MenuOpenCloseHandler::ReceiveEvent(MenuOpenCloseEvent * evn, void * dispatcher)
@@ -541,7 +633,7 @@ EventResult	MenuOpenCloseHandler::ReceiveEvent(MenuOpenCloseEvent * evn, void * 
 		!_strcmpi("LoadingMenu", evn->menuName.c_str()) || (!_strcmpi("PipboyMenu", evn->menuName.c_str()) && !iShowInPipboy) \
 		)
 	{
-
+		isSurvival = (GetDifficulty() == 6);
 		if (evn->isOpen)
 		{
 			numMenus++;
@@ -550,15 +642,14 @@ EventResult	MenuOpenCloseHandler::ReceiveEvent(MenuOpenCloseEvent * evn, void * 
 		{
 			numMenus--;
 		}
-		if (numMenus > 0 || !isSurvival)
+		if (numMenus > 0)
 		{
 			_DMESSAGE("CloseMenu");
 			SSW_Menu::CloseMenu();
 		}
-		else
+		else if (isSurvival || isHMO)
 		{
-			_DMESSAGE("OpenMenu");
-			//FindHCScriptIdentifier();
+			_DMESSAGE("OpenMenu from MenuOpenCloseHandler");
 			SSW_Menu::OpenMenu();
 		}
 	}
@@ -576,14 +667,27 @@ void OnF4SEMessage(F4SEMessagingInterface::Message* msg) {
 		static auto pMenuOpenCloseHandler = new MenuOpenCloseHandler();
 		(*g_ui)->menuOpenCloseEventSource.AddEventSink(pMenuOpenCloseHandler);
 
-		static auto pDifficultyChangedHandler = new DifficultyChangedHandler();
-		GetEventDispatcher<PlayerDifficultySettingChanged::Event>()->AddEventSink(pDifficultyChangedHandler);
+		//static auto pDifficultyChangedHandler = new DifficultyChangedHandler();
+		//GetEventDispatcher<PlayerDifficultySettingChanged::Event>()->AddEventSink(pDifficultyChangedHandler);
 
 		ReadSettings();
 
 		HC_HungerEffect = DYNAMIC_CAST(LookupFormByID(HC_HungerEffect_FormID), TESForm, ActorValueInfo);
 		HC_ThirstEffect = DYNAMIC_CAST(LookupFormByID(HC_ThirstEffect_FormID), TESForm, ActorValueInfo);
 		HC_SleepEffect = DYNAMIC_CAST(LookupFormByID(HC_SleepEffect_FormID), TESForm, ActorValueInfo);
+
+		HMO_quest = DYNAMIC_CAST(GetFormFromIdentifier("HardcoreMode_ON.esm|800"), TESForm, TESQuest);
+		if (HMO_quest)
+		{
+			_MESSAGE("HardcoreMode_ON.esm found, switch mode to HMO");
+			isHMO = true;
+		}
+		else
+		{
+			_MESSAGE("all functions found, stop ScriptFunctionReg_Hook");
+			unsigned char data[] = { 0xE8, 0x2A, 0xF3, 0x01, 0x00 };
+			SafeWriteBuf(ScriptFunctionReg_HookTarget.GetUIntPtr(), &data, sizeof(data));
+		}
 
 		break;
 	case F4SEMessagingInterface::kMessage_GameLoaded:
@@ -597,26 +701,6 @@ void OnF4SEMessage(F4SEMessagingInterface::Message* msg) {
 		break;
 	}
 }
-
-
-// 0x80
-class ScriptFunction : public IFunction
-{
-public:
-	BSFixedString * functionName;
-	BSFixedString*	scriptName;
-	BSFixedString*	str20;
-	UInt64*			returnType;
-	void*			params;
-	UInt16			numParams;
-
-};
-
-ScriptFunction* HC_ApplyEffectFunction = nullptr;
-
-typedef UInt32(*_Message_Show)(VirtualMachine* vm, UInt32 stackId, BGSMessage* msg, float param1, float param2, float param3, float param4, float param5, float param6, float param7, float param8, float param9);
-RelocAddr <_Message_Show> Message_Show(Message_Show_ADDRESS);
-_Message_Show Message_Show_Original = nullptr;
 
 UInt32 Message_Show_Hook(VirtualMachine* vm, UInt32 stackId, BGSMessage* msg, float param1, float param2, float param3, float param4, float param5, float param6, float param7, float param8, float param9)
 {
@@ -680,34 +764,34 @@ UInt32 Message_Show_Hook(VirtualMachine* vm, UInt32 stackId, BGSMessage* msg, fl
 	return result;
 }
 
-struct ScriptFunctionRegParam2
-{
-public:
-	BSFixedString functionName;
-	BSFixedString scriptName;
-	//...
-};
+ScriptFunction* HC_ApplyEffectFunction = nullptr;
 
-typedef void*(*_ScriptFunctionReg)(ScriptFunction* param1, ScriptFunctionRegParam2* param2);
-RelocAddr <_ScriptFunctionReg> ScriptFunctionReg_HookTarget(ScriptFunctionReg_HookTarget_ADDRESS);
-RelocAddr <_ScriptFunctionReg> ScriptFunctionReg_Original(ScriptFunctionReg_Original_ADDRESS);
+ScriptFunction* HMO_OnTimerFunction1 = nullptr;
 
 void* ScriptFunctionReg_Hook(ScriptFunction* param1, ScriptFunctionRegParam2* param2)
 {
+	//_MESSAGE("%s %s", param2->scriptName.c_str(), param2->functionName.c_str());
 	if (!_strcmpi("DamageFatigue", param2->functionName.c_str()) && !_strcmpi("hardcore:hc_managerscript", param2->scriptName.c_str())) // using DamageFatigue instead of ApplyEffect
 	{
 		_MESSAGE("hardcore:hc_managerscript.ApplyEffect() function address found");
+		numScriptsHookCount += 1;
 		HC_ApplyEffectFunction = param1;
+	}
+	if (!_strcmpi("EvaluateStats", param2->functionName.c_str()) && !_strcmpi("HMO_CoreSCRIPT", param2->scriptName.c_str()))
+	{
+		_MESSAGE("HMO_CoreSCRIPT.OnTimer() function address found");
+		DumpClass(param2,10);
+		numScriptsHookCount += 1;
+		HMO_OnTimerFunction1 = param1;
+	}
+	if (numScriptsHookCount == numScriptsHook)
+	{
+		_MESSAGE("all functions found, stop ScriptFunctionReg_Hook");
 		unsigned char data[] = { 0xE8, 0x2A, 0xF3, 0x01, 0x00 };
 		SafeWriteBuf(ScriptFunctionReg_HookTarget.GetUIntPtr(), &data, sizeof(data));
 	}
 	return ScriptFunctionReg_Original(param1, param2);
 }
-
-typedef UInt32(*_ScriptFunction_Invoke)(ScriptFunction* param1, void* param2, void* param3, VirtualMachine* param4, UInt8 param5);
-RelocAddr <_ScriptFunction_Invoke> ScriptFunction_Invoke_HookTarget(ScriptFunction_Invoke_HookTarget_ADDRESS);
-_ScriptFunction_Invoke ScriptFunction_Invoke_Original;
-
 
 void UpdateValues_int()
 {
@@ -725,7 +809,7 @@ void UpdateValues_int()
 			{
 				iFoodPool = (SInt32)FoodPool.data.f;
 			}
-			_MESSAGE("FoodPool %d", iFoodPool);
+			//_MESSAGE("FoodPool %d", iFoodPool);
 		}
 		if (GetScriptVariableValue(hcScriptIdentifier, "DrinkPool", &DrinkPool))
 		{
@@ -737,18 +821,64 @@ void UpdateValues_int()
 			{
 				iDrinkPool = (SInt32)DrinkPool.data.f;
 			}
-			_MESSAGE("DrinkPool %d", iDrinkPool);
+			//_MESSAGE("DrinkPool %d", iDrinkPool);
 		}
 		SSW_Menu::UpdateValues();
 	}
 }
 
+void UpdateValues_int_HMO(PlayerStats* stats)
+{
+	
+		iFoodPool = -(SInt32)stats->currentHunger.data.f;
+		//_MESSAGE("FoodPool %d", iFoodPool);
+
+		iDrinkPool = -(SInt32)stats->currentThirst.data.f;
+		//_MESSAGE("DrinkPool %d", iDrinkPool);
+
+		iSleepPool = -(SInt32)stats->currentSleepless.data.f;
+		//_MESSAGE("SleepPool %d", iSleepPool);
+
+		iFoodPoolStarvingAmount = -(SInt32)stats->maxHunger.data.f;
+		//_MESSAGE("FoodPoolStarvingAmount %d", iFoodPoolStarvingAmount);
+
+		iDrinkPoolSeverelyDehydratedAmount = -(SInt32)stats->maxThirst.data.f;
+		//_MESSAGE("DrinkPoolSeverelyDehydratedAmount %d", iDrinkPoolSeverelyDehydratedAmount);
+
+		iSleepPoolIncapacitatedAmount = -(SInt32)stats->maxSleepless.data.f;
+		//_MESSAGE("SleepPoolIncapacitatedAmount %d", iSleepPoolIncapacitatedAmount);
+
+		SSW_Menu::UpdateAmounts();
+		SSW_Menu::UpdateValues();
+}
+
 UInt32 ScriptFunction_Invoke_Hook(ScriptFunction* param1, void* param2, void* param3, VirtualMachine* param4, UInt8 param5) {
 
-	if (HC_ApplyEffectFunction && param1 == HC_ApplyEffectFunction)
+	if (isHMO)
 	{
-		_MESSAGE("ApplyEffect Hook");
-		UpdateValues_int();
+		if (HMO_OnTimerFunction1 && param1 == HMO_OnTimerFunction1)
+		{
+			_MESSAGE("HMO_OnTimer Hook");
+			VMValue playerstats;
+			PlayerStats * playerstatsvalues;
+
+			if (HMOScriptIdentifier)
+			{
+				if (GetScriptVariableValue(HMOScriptIdentifier, "PlayerStats", &playerstats))
+				{
+					playerstatsvalues = (PlayerStats*)&playerstats.data.strct->m_value;
+					UpdateValues_int_HMO(playerstatsvalues);
+				}
+			}
+		}
+	}
+	else if (isSurvival)
+	{
+		if (HC_ApplyEffectFunction && param1 == HC_ApplyEffectFunction)
+		{
+			_MESSAGE("ApplyEffect Hook");
+			UpdateValues_int();
+		}
 	}
 	UInt32 result = ScriptFunction_Invoke_Original(param1, param2, param3, param4, param5);
 	return result;
@@ -818,8 +948,8 @@ extern "C"
 	bool F4SEPlugin_Load(const F4SEInterface *f4se)
 	{
 		logMessage("load");
-		InitVIAddresses();
-		RVAManager::UpdateAddresses(f4se->runtimeVersion);
+		//InitVIAddresses();
+		//RVAManager::UpdateAddresses(f4se->runtimeVersion);
 		if (CheckModDropClientService() == 0)
 		{
 			_WARNING("WARNING: ModDropClient found.");
