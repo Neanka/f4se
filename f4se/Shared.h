@@ -1067,6 +1067,7 @@ void tracePipboyArray(PipboyArray* arr);
 void tracePipboyObject(PipboyObject* obj);
 void tracePipboyValue(PipboyValue* pv);
 
+//98
 class PipboyDataGroup
 {
 	void*						vtable;	// 0x00
@@ -1117,7 +1118,12 @@ STATIC_ASSERT(sizeof(PipboyQuestData) == 0xE8);
 class PipboyWorkshopData : public PipboyDataGroup
 {
 public:
-	void*			unk98[21];
+	BSTEventSink<ActorValueEvents::ActorValueChangedEvent>		es1;
+	BSTEventSink<Workshop::WorkshopModeEvent>					es2;
+	PipboyArray*												unkPA_A8;
+	tHashSet<UInt32, UInt32>									unkHS_B0;
+	tHashSet<UInt32, UInt32>									unkHS_E0;
+	tHashSet<UInt32, UInt32>									unkHS_110;
 };
 STATIC_ASSERT(sizeof(PipboyWorkshopData) == 0x140);
 

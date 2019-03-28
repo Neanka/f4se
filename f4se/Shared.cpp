@@ -941,37 +941,37 @@ void tracePipboyValue(PipboyValue* pv)
 	//_MESSAGE("%s 0x%016I64X", GetObjectClassName(pv), vtbladdress);
 	switch (vtbladdress)
 	{
-	case 0x2D545B0:	// BSFixedStringCS
+	case 0x2D2A550:	// BSFixedStringCS
 		tracePipboyPrimitiveValueBSFixedStringCS((PipboyPrimitiveValue<BSFixedString>*)pv);
 		break;
-	case 0x2D54658:	// uint
+	case 0x2D2A5F8:	// uint
 		tracePipboyPrimitiveValueUInt((PipboyPrimitiveValue<UInt32>*)pv);
 		break;
-	case 0x2D55620:	// uchar
+	case 0x2D2B5C0:	// uchar
 		tracePipboyPrimitiveValueUChar((PipboyPrimitiveValue<UInt8>*)pv);
 		break;
-	case 0x2D55988:	// Throttled uchar
+	case 0x2D2B928:	// Throttled uchar
 		tracePipboyPrimitiveThrottledValueUChar((PipboyPrimitiveThrottledValue<UInt8>*)pv);
 		break;
-	case 0x2D545E8:	// bool
+	case 0x2D2A588:	// bool
 		tracePipboyPrimitiveValueBool((PipboyPrimitiveValue<bool>*)pv);
 		break;
-	case 0x2D559D0:	// Throttled bool
+	case 0x2D2B970:	// Throttled bool
 		tracePipboyPrimitiveThrottledValueBool((PipboyPrimitiveThrottledValue<bool>*)pv);
 		break;
-	case 0x2D54620:	// int
+	case 0x2D2A5C0:	// int
 		tracePipboyPrimitiveValueInt((PipboyPrimitiveValue<SInt32>*)pv);
 		break;
-	case 0x2D54690:	// float
+	case 0x2D2A630:	// float
 		tracePipboyPrimitiveValueFloat((PipboyPrimitiveValue<float>*)pv);
 		break;
-	case 0x2D55940:	// Throttled float
+	case 0x2D2B8E0:	// Throttled float
 		tracePipboyPrimitiveThrottledValueFloat((PipboyPrimitiveThrottledValue<float>*)pv);
 		break;
-	case 0x2D53FD8:	// PipboyArray
+	case 0x2D29F78:	// PipboyArray
 		tracePipboyArray((PipboyArray*)pv);
 		break;
-	case 0x2D55B68:	// PipboyObject
+	case 0x2D2BB08:	// PipboyObject
 		tracePipboyObject((PipboyObject*)pv);
 		break;
 	default:
@@ -1005,7 +1005,7 @@ void tracePipboyObject(PipboyObject* obj)
 };
 
 
-RelocPtr <ItemMenuDataManager*> g_itemMenuDataMgr(0x0590DA00);  // 48 8B FA 48 8B D9 74 ? 48 8B D1   0x11, 3, 8);
+RelocPtr <ItemMenuDataManager*> g_itemMenuDataMgr(0x58D4980); // 1 10 130 // 48 8B FA 48 8B D9 74 ? 48 8B D1   0x11, 3, 8);
 RelocAddr <_getInventoryItemByHandleID> getInventoryItemByHandleID(0x001A3650); // 1 10 106 !!!
 
 BGSInventoryItem* getInventoryItemByIndex(UInt32 index)

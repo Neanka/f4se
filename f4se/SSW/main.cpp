@@ -774,13 +774,14 @@ void* ScriptFunctionReg_Hook(ScriptFunction* param1, ScriptFunctionRegParam2* pa
 	if (!_strcmpi("DamageFatigue", param2->functionName.c_str()) && !_strcmpi("hardcore:hc_managerscript", param2->scriptName.c_str())) // using DamageFatigue instead of ApplyEffect
 	{
 		_MESSAGE("hardcore:hc_managerscript.ApplyEffect() function address found");
+		DumpClass(param2, 0x10);
 		numScriptsHookCount += 1;
 		HC_ApplyEffectFunction = param1;
 	}
 	if (!_strcmpi("EvaluateStats", param2->functionName.c_str()) && !_strcmpi("HMO_CoreSCRIPT", param2->scriptName.c_str()))
 	{
 		_MESSAGE("HMO_CoreSCRIPT.OnTimer() function address found");
-		DumpClass(param2,10);
+		DumpClass(param2,0x10);
 		numScriptsHookCount += 1;
 		HMO_OnTimerFunction1 = param1;
 	}

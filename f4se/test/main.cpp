@@ -24,6 +24,62 @@ RelocAddr <_IsWaiting> IsWaiting(0x00D72700);
 
 // 590DA80  BGSInventoryItemEvent event dispatcher
 
+struct SilentMessageStruct
+{
+	byte _a;
+	byte _b;
+};
+
+typedef void(*_SilentMessage)(SilentMessageStruct* str, bool silent, bool unk1);
+RelocAddr <_SilentMessage> SilentMessage(0x00EC2010);
+
+typedef void(*_NoSilentMessage)(SilentMessageStruct* str);
+RelocAddr <_NoSilentMessage> NoSilentMessage(0x00EC2060);
+
+struct RemoveItemStruct
+{
+public:
+	// unk00-pad1C - &BSTArrayAllocatorFunctor<BSTSmallArrayHeapAllocator<16>>
+	UInt32			unk00;	//		small array size or entry size?
+	UInt32			pad04;
+	UInt32			unk08[4];	//		\	if !(unk00 & 0x80000000)
+	//UInt32			unk0C;	//		|	unk08-unk14 is small array of 4 stackIDs
+	//UInt32			unk10;	//		|	else point to stackIDs
+	//UInt32			unk14;	//		|	
+	UInt32			unk18;	//		/	small array item count
+	UInt32			pad1C;
+	TESForm*		unk20;	// item base form
+	UInt32			unk28;	// item count to remove
+	UInt32			unk2C;	// 4 if move to another container, 3 if drop and 0 to completely delete
+	TESObjectREFR*	unk30;	// other container ref, could be null
+	void*			unk38;	// sub_140236400 7th param
+	void*			unk40;	// sub_140236400 8th param
+};
+STATIC_ASSERT(sizeof(RemoveItemStruct) == 0x48);
+
+typedef UInt32(*_RemoveItem_Int)(void* param1, UInt32* param2, RemoveItemStruct* param3);
+RelocAddr <_RemoveItem_Int> RemoveItem_Int(0x003F9710);
+_RemoveItem_Int RemoveItem_Int_Original;
+
+UInt32 RemoveItem_Int_Hook(void* param1, UInt32* param2, RemoveItemStruct* param3) {
+	_MESSAGE("RemoveItem_Int_Hook");
+	DumpClass(param1, 4);
+	//DumpClass(param2, 1);
+	DumpClass(param3, 9);
+	//DumpClass(param3->unk10, 5);
+	UInt32 result = RemoveItem_Int_Original(param1, param2, param3);
+
+	/*DumpClass(param1, 1);
+	DumpClass(param2, 1);
+	DumpClass(param3, 8);
+	DumpClass(param3->unk10, 5);*/
+	return result;
+}
+
+TESForm*		tempform = nullptr;
+UInt32			tempstackidcount = 0;
+std::vector<UInt32>	tempstackid = { 0,0,0,0 };
+
 typedef void(*_ContainerMenuInvoke)(ContainerMenuBase* menu, GFxFunctionHandler::Args* args);
 
 RelocAddr <_ContainerMenuInvoke> ContainerMenuInvoke(0x00B0A280);
@@ -32,7 +88,7 @@ _ContainerMenuInvoke ContainerMenuInvoke_Original;
 class PipboyMenu;
 typedef void(*_PipboyMenuInvoke)(PipboyMenu* menu, GFxFunctionHandler::Args* args);
 
-RelocAddr <_PipboyMenuInvoke> PipboyMenuInvoke(0x00B93F60);
+RelocAddr <_PipboyMenuInvoke> PipboyMenuInvoke(0x00B93F60); // 1 10 130
 _PipboyMenuInvoke PipboyMenuInvoke_Original;
 
 BGSDamageType* ConditionDtype;
@@ -396,13 +452,25 @@ void PipboyMenuInvoke_Hook(PipboyMenu * menu, GFxFunctionHandler::Args * args) {
 			if (ti)
 			{
 				UInt32 val = ((PipboyPrimitiveValue<UInt32>*)(ti->value))->value;
-				_MESSAGE("handleID: %u", val);
+				//_MESSAGE("handleID: %u", val);
+				BGSInventoryItem* ii = getInventoryItemByHandleID_int(val);
+				if (ii && ii->form)
+				{
+					DumpClass(ii->form,1);
+					tempform = ii->form;
+				}
 			}
 			BSFixedString str2 = BSFixedString("StackID");
 			PipboyObject::PipboyTableItem *ti2 = (*g_PipboyDataManager)->inventoryData.inventoryObjects[selectedIndex]->table.Find(&str2);
 			if (ti2)
 			{
-				tracePipboyArray((PipboyArray*)ti2->value);
+				//tracePipboyArray((PipboyArray*)ti2->value);
+				tempstackidcount = ((PipboyArray*)ti2->value)->value.count;
+				for (size_t i = 0; i < tempstackidcount; i++)
+				{
+					tempstackid[i] = ((PipboyPrimitiveValue<UInt32>*)((PipboyArray*)ti2->value)->value[i])->value;
+					_MESSAGE("stackID: %u", tempstackid[i]);
+				}
 			}
 		}
 		/*
@@ -509,7 +577,7 @@ bool RegisterScaleform(GFxMovieView * view, GFxValue * f4se_root)
 	std::string currentSWFPathString = "";
 	if (movieRoot->GetVariable(&currentSWFPath, "root.loaderInfo.url")) {
 		currentSWFPathString = currentSWFPath.GetString();
-		//_MESSAGE("hooking %s", currentSWFPathString.c_str());
+		_MESSAGE("hooking %s", currentSWFPathString.c_str());
 		if (currentSWFPathString.find("ExamineMenu.swf") != std::string::npos)
 		{
 			_DMESSAGE("hooking ExamineMenu");
@@ -634,9 +702,42 @@ public:
 };
 STATIC_ASSERT(sizeof(BGSSaveLoadManager) == 0x980);
 
+
+
 bool testfunk(StaticFunctionTag *base) {
 	_MESSAGE("testfunk");
 
+	//DumpClass(&(*g_PipboyDataManager)->workshopData, 0x140/8);
+	//tracePipboyArray((*g_PipboyDataManager)->workshopData.unkPA_A8);
+	//return true;
+
+	//TESObjectREFR* ws = DYNAMIC_CAST(LookupFormByID(0x000250FE), TESForm, TESObjectREFR);
+	//DumpClass(LookupFormByID(0x000250FE),1);
+
+	SilentMessageStruct sms = {};
+	SilentMessage(&sms, 1, 0);
+
+	RemoveItemStruct removeItemStruct{ };
+
+	removeItemStruct.unk00 = 0x80000004;
+	for (size_t i = 0; i < tempstackidcount; i++)
+	{
+		removeItemStruct.unk08[i] = tempstackid[i];
+	}
+	removeItemStruct.unk18 = tempstackidcount;
+	removeItemStruct.unk20 = tempform;
+	removeItemStruct.unk28 = 1;
+	removeItemStruct.unk2C = 3;
+	removeItemStruct.unk30 = nullptr;
+	removeItemStruct.unk38 = nullptr;
+	removeItemStruct.unk40 = nullptr;
+
+	DumpClass(&removeItemStruct, 9);
+	UInt32 ret = 0;
+	RemoveItem_Int(*g_player, &ret, &removeItemStruct);
+	NoSilentMessage(&sms);
+
+	return true;
 	Actor* playerref = *g_player;
 
 	TESObjectREFR* ref = NULL;
@@ -1192,7 +1293,7 @@ extern "C"
 
 			g_branchTrampoline.Write6Branch(ContainerMenuInvoke.GetUIntPtr(), (uintptr_t)ContainerMenuInvoke_Hook);
 		}
-
+		*/
 		{
 			struct PipboyMenuInvoke_Code : Xbyak::CodeGenerator {
 				PipboyMenuInvoke_Code(void * buf) : Xbyak::CodeGenerator(4096, buf)
@@ -1217,7 +1318,7 @@ extern "C"
 
 			g_branchTrampoline.Write5Branch(PipboyMenuInvoke.GetUIntPtr(), (uintptr_t)PipboyMenuInvoke_Hook);
 		}
-
+		/*
 		{
 			struct GetPropertyValue_Code : Xbyak::CodeGenerator {
 				GetPropertyValue_Code(void * buf) : Xbyak::CodeGenerator(4096, buf)
@@ -1346,6 +1447,29 @@ extern "C"
 
 			g_branchTrampoline.Write5Branch(ExamineMenu__DrawNextFrame.GetUIntPtr(), (uintptr_t)ExamineMenu__DrawNextFrame_Hook);
 		}*/
+
+		{
+		struct RemoveItem_Int_Code : Xbyak::CodeGenerator {
+			RemoveItem_Int_Code(void * buf) : Xbyak::CodeGenerator(4096, buf)
+			{
+				Xbyak::Label retnLabel;
+
+				mov(ptr[rsp + 0x18], r8);
+				jmp(ptr[rip + retnLabel]);
+
+				L(retnLabel);
+				dq(RemoveItem_Int.GetUIntPtr() + 5);
+			}
+		};
+
+		void * codeBuf = g_localTrampoline.StartAlloc();
+		RemoveItem_Int_Code code(codeBuf);
+		g_localTrampoline.EndAlloc(code.getCurr());
+
+		RemoveItem_Int_Original = (_RemoveItem_Int)codeBuf;
+
+		g_branchTrampoline.Write5Branch(RemoveItem_Int.GetUIntPtr(), (uintptr_t)RemoveItem_Int_Hook);
+		}
 
 		unsigned char data[] = { 0x90, 0x90, 0x90, 0x90, 0x90 };
 		//SafeWriteBuf(RelocAddr<uintptr_t>(0xB8E6EF).GetUIntPtr(), &data, sizeof(data));
