@@ -40,11 +40,11 @@ struct RemoveItemStruct
 {
 public:
 	// unk00-pad1C - &BSTArrayAllocatorFunctor<BSTSmallArrayHeapAllocator<16>>
-	UInt32			unk00;	//		small array size or entry size?
+	UInt32			unk00;	//		small array capacity | 0x80000000 (local allocation)
 	UInt32			pad04;
-	UInt32			unk08[4];	//		\	if !(unk00 & 0x80000000)
+	UInt32			unk08[4];	//		\	
 	//UInt32			unk0C;	//		|	unk08-unk14 is small array of 4 stackIDs
-	//UInt32			unk10;	//		|	else point to stackIDs
+	//UInt32			unk10;	//		|	
 	//UInt32			unk14;	//		|	
 	UInt32			unk18;	//		/	small array item count
 	UInt32			pad1C;
@@ -280,6 +280,17 @@ void PopulateItemCardInfoList_Hook(GFxValue* itemCard, BGSInventoryItem * itemFo
 typedef void(*_ExamineMenu__Invoke)(ExamineMenu* menu, GFxFunctionHandler::Args * args);
 RelocAddr <_ExamineMenu__Invoke> ExamineMenu__Invoke_HookTarget(0x2D46160);
 _ExamineMenu__Invoke ExamineMenu__Invoke_Original;
+
+typedef EventResult(*_TestEvent_RecieveEvent)(void* arg1, void* arg2, void* arg3);
+RelocAddr <_TestEvent_RecieveEvent> TestEvent_RecieveEvent_HookTarget(0x2D2A740);
+_TestEvent_RecieveEvent TestEvent_RecieveEvent_Original;
+
+EventResult TestEvent_RecieveEvent_Hook(void* arg1, void* arg2, void* arg3)
+{
+	_MESSAGE("TestEvent_RecieveEvent_Hook");
+	DumpClass(arg2, 10);
+	return TestEvent_RecieveEvent_Original(arg1, arg2, arg3);
+}
 
 typedef SInt32(*_GetInventoryListObjectSelectedIndex)(ExamineMenu* menu);
 RelocAddr <_GetInventoryListObjectSelectedIndex> GetInventoryListObjectSelectedIndex(0x0B1B160);
@@ -702,7 +713,21 @@ public:
 };
 STATIC_ASSERT(sizeof(BGSSaveLoadManager) == 0x980);
 
+bool IsSwimming(Actor* actor)
+{
+	enum flags08 {
+		kState_Walking = 0x40,
+		kState_Running = 0x80,
+		kState_Sprinting = 0x100,
+		kState_Swimming = 0x400
+	};
+	enum flags0C {
+		kState_Sneaking = 0x600 //?
+	};
 
+	
+	return (actor->actorState.unk08 & kState_Swimming) == kState_Swimming;
+}
 
 bool testfunk(StaticFunctionTag *base) {
 	_MESSAGE("testfunk");
@@ -714,6 +739,24 @@ bool testfunk(StaticFunctionTag *base) {
 	//TESObjectREFR* ws = DYNAMIC_CAST(LookupFormByID(0x000250FE), TESForm, TESObjectREFR);
 	//DumpClass(LookupFormByID(0x000250FE),1);
 
+	//DumpClass(&(*g_PipboyDataManager)->inventoryData, 0x198/8);
+
+	//tracePipboyObject((*g_PipboyDataManager)->inventoryData.inventoryObject);
+
+	RelocPtr<void*>g_pipboyInventoryData(0x5ABCAB8); // 130
+	DumpClass(&(*g_PipboyDataManager)->inventoryData,20);
+	EnterCriticalSection(&(*g_PipboyDataManager)->inventoryData.lpcs);
+	DumpClass(&(*g_PipboyDataManager)->inventoryData, 20);
+	LeaveCriticalSection(&(*g_PipboyDataManager)->inventoryData.lpcs);
+
+	_MESSAGE("address 0x%016I64X", (uintptr_t)&(*g_PipboyDataManager)->inventoryData.lpcs);
+	_MESSAGE("address 0x%016I64X", g_pipboyInventoryData.GetUIntPtr() + 0x60);
+
+	(*g_PipboyDataManager)->inventoryData.hsF0.Dump();
+	(*g_PipboyDataManager)->inventoryData.hs120.Dump();
+
+
+	return true;
 	SilentMessageStruct sms = {};
 	SilentMessage(&sms, 1, 0);
 
@@ -777,7 +820,7 @@ bool testfunk(StaticFunctionTag *base) {
 	}
 	return true;
 
-	RelocPtr<void*>g_pipboyInventoryData(0x5ABCAB8); // 130
+	//RelocPtr<void*>g_pipboyInventoryData(0x5ABCAB8); // 130
 	_MESSAGE("address 0x%016I64X", (uintptr_t)&(*g_PipboyDataManager)->inventoryData + 0x60);
 	_MESSAGE("address 0x%016I64X", g_pipboyInventoryData.GetUIntPtr() + 0x60);
 	return true;
@@ -967,50 +1010,6 @@ bool testfunk(StaticFunctionTag *base) {
 	//DumpClass((*g_PipboyDataManager)->mapData.unkxx[11], 50);
 	
 	return true;
-
-	TESQuest* hc = DYNAMIC_CAST(LookupFormByID(0x80E), TESForm, TESQuest);
-	IObjectHandlePolicy * hp = (*g_gameVM)->m_virtualMachine->GetHandlePolicy();
-	UInt64 hdl = hp->Create(hc->kTypeID, hc);
-
-	VMIdentifier* hcScriptIdentifier = nullptr;
-
-	VirtualMachine::IdentifierItem * ii = (*g_gameVM)->m_virtualMachine->m_attachedScripts.Find(&hdl);
-
-	if (ii->count == 1)
-	{
-		if (_stricmp(ii->GetScriptObject(ii->identifier.one)->m_typeInfo->m_typeName.c_str(), "Hardcore:HC_ManagerScript") == 0)
-		{
-			hcScriptIdentifier = ii->GetScriptObject(ii->identifier.one);
-		}		
-	}
-	else
-	{
-		for (UInt32 i = 0; i < ii->count; ++i)
-		{
-			
-			if (_stricmp(ii->GetScriptObject(ii->identifier.many[i])->m_typeInfo->m_typeName.c_str(), "Hardcore:HC_ManagerScript") == 0)
-			{
-				hcScriptIdentifier = ii->GetScriptObject(ii->identifier.many[i]);
-				break;
-			}
-				
-		}
-	}
-
-	VMValue FoodPool, DrinkPool;
-
-	if (hcScriptIdentifier)
-	{
-		if (GetScriptVariableValue(hcScriptIdentifier, "FoodPool", &FoodPool))
-		{
-			_MESSAGE("FoodPool %d", FoodPool.data.i);
-		}
-		if (GetScriptVariableValue(hcScriptIdentifier, "DrinkPool", &DrinkPool))
-		{
-			_MESSAGE("DrinkPool %d", DrinkPool.data.i);
-		}
-	}
-
 	/*class xxxVisitor : public VirtualMachine::IdentifierItem::IScriptVisitor
 	{
 	public:
@@ -1294,6 +1293,7 @@ extern "C"
 			g_branchTrampoline.Write6Branch(ContainerMenuInvoke.GetUIntPtr(), (uintptr_t)ContainerMenuInvoke_Hook);
 		}
 		*/
+		/*
 		{
 			struct PipboyMenuInvoke_Code : Xbyak::CodeGenerator {
 				PipboyMenuInvoke_Code(void * buf) : Xbyak::CodeGenerator(4096, buf)
@@ -1318,6 +1318,7 @@ extern "C"
 
 			g_branchTrampoline.Write5Branch(PipboyMenuInvoke.GetUIntPtr(), (uintptr_t)PipboyMenuInvoke_Hook);
 		}
+		*/
 		/*
 		{
 			struct GetPropertyValue_Code : Xbyak::CodeGenerator {
@@ -1447,7 +1448,7 @@ extern "C"
 
 			g_branchTrampoline.Write5Branch(ExamineMenu__DrawNextFrame.GetUIntPtr(), (uintptr_t)ExamineMenu__DrawNextFrame_Hook);
 		}*/
-
+		/*
 		{
 		struct RemoveItem_Int_Code : Xbyak::CodeGenerator {
 			RemoveItem_Int_Code(void * buf) : Xbyak::CodeGenerator(4096, buf)
@@ -1470,11 +1471,13 @@ extern "C"
 
 		g_branchTrampoline.Write5Branch(RemoveItem_Int.GetUIntPtr(), (uintptr_t)RemoveItem_Int_Hook);
 		}
+		*/
 
 		unsigned char data[] = { 0x90, 0x90, 0x90, 0x90, 0x90 };
 		//SafeWriteBuf(RelocAddr<uintptr_t>(0xB8E6EF).GetUIntPtr(), &data, sizeof(data));
 		//g_branchTrampoline.Write5Call(wsm_secondAddress.GetUIntPtr(), (uintptr_t)myReplacingFunction);
 		//ExamineMenu__Invoke_Original = HookUtil::SafeWrite64(ExamineMenu__Invoke_HookTarget.GetUIntPtr(), &ExamineMenu__Invoke_Hook);
+		TestEvent_RecieveEvent_Original = HookUtil::SafeWrite64(TestEvent_RecieveEvent_HookTarget.GetUIntPtr(), &TestEvent_RecieveEvent_Hook);
 
 		return true;
 	}

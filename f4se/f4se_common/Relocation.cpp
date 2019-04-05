@@ -26,5 +26,5 @@ uintptr_t RelocationManager::s_baseAddr = 0;
 
 RelocationManager::RelocationManager()
 {
-	s_baseAddr = reinterpret_cast<uintptr_t>(GetModuleHandle(NULL));
+	s_baseAddr = reinterpret_cast<uintptr_t>(GetModuleHandleA(NULL));
 }

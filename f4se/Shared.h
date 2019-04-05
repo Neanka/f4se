@@ -863,6 +863,26 @@ struct PerkValueEvents
 	{
 
 	};
+	struct PerkValueChangedEvent
+	{
+
+	};
+};
+
+struct InventoryInterface
+{
+	struct FavoriteChangedEvent
+	{
+
+	};
+};
+
+struct HolotapeStateChanged
+{
+	struct Event
+	{
+
+	};
 };
 
 struct HourPassed
@@ -888,9 +908,21 @@ struct PlayerUpdateEvent
 
 struct BGSInventoryItemEvent
 {
+	// 8
 	struct Event
 	{
+		UInt32		ownerRefHandle;
+		UInt32		itemHandleID;
+	};
+};
 
+struct FavoriteMgr_Events
+{
+	// 10
+	struct ComponentFavoriteEvent
+	{
+		BGSComponent*		component;
+		UInt8				taggedForSearch;
 	};
 };
 
@@ -1019,6 +1051,46 @@ public:
 STATIC_ASSERT(offsetof(PipboyObject, table) == 0x18);
 */
 
+
+class PipboyObject : public PipboyValue
+{
+public:
+	struct PipboyTableItem
+	{
+		BSFixedString	key;
+		PipboyValue		*value;
+
+		bool operator==(const BSFixedString & a_name) const { return key == a_name; }
+		operator BSFixedString() const { return key; }
+
+		static inline UInt32 GetHash(BSFixedString * key)
+		{
+			UInt32 hash;
+			CalculateCRC32_64(&hash, (UInt64)key->data, 0);
+			return hash;
+		}
+
+		void Dump()
+		{
+			_MESSAGE("%s", key.c_str());
+		}
+	};
+
+
+	virtual ~PipboyObject();
+
+	tHashSet<PipboyTableItem, BSFixedString>	table;	// 18
+	tHashSet<UInt32>	table2;	// 48	contain PipboyValue::unk08 values of this object members
+	tArray<void*>	unk78;
+	UInt8			unk90;
+
+	MEMBER_FN_PREFIX(PipboyObject);
+	DEFINE_MEMBER_FN(Construct, PipboyObject*, 0x0, PipboyValue*);
+	DEFINE_MEMBER_FN(SetMember, void, 0x0, BSFixedString*, PipboyValue*);
+};
+STATIC_ASSERT(sizeof(PipboyObject) == 0x98);
+
+
 template <class T>
 class PipboyPrimitiveThrottledValue : public PipboyPrimitiveValue<T>
 {
@@ -1070,8 +1142,20 @@ void tracePipboyValue(PipboyValue* pv);
 //98
 class PipboyDataGroup
 {
-	void*						vtable;	// 0x00
-	void*						unk08[0x88/8];
+public:
+	virtual ~PipboyDataGroup();
+
+	virtual void Unk_01();
+	virtual void Unk_02();
+	virtual void Unk_03();
+
+	void*						unk08;
+	tArray<void*>				arr1;
+	tArray<void*>				arr2;
+	tArray<void*>				arr3;
+	void*						unk58;
+	CRITICAL_SECTION			lpcs;			// 60
+	void*						unk88;
 	PipboyObject*				object; // 0x90
 };
 STATIC_ASSERT(sizeof(PipboyDataGroup) == 0x98);
@@ -1097,14 +1181,62 @@ public:
 };
 STATIC_ASSERT(sizeof(PipboyPerksData) == 0xD8);
 
+
+
 class PipboyInventoryData: public PipboyDataGroup
 {
 public:
-	
-	void*			unk98[23];
-	tArray<PipboyObject*>				inventoryObjects;				// 150
-	void*			unk168[6];
+	BSTEventSink<BGSInventoryListEvent::Event>					es1; // 98
+	BSTEventSink<ActorEquipManagerEvent::Event>					es2; // A0
+	BSTEventSink<ActorValueEvents::ActorValueChangedEvent>		es3; // A8
+	BSTEventSink<PerkValueEvents::PerkEntryUpdatedEvent>		es4; // B0
+	BSTEventSink<PerkValueEvents::PerkValueChangedEvent>		es5; // B8
+	BSTEventSink<InventoryInterface::FavoriteChangedEvent>		es6; // C0
+	BSTEventSink<HolotapeStateChanged::Event>					es7; // C8
+	BSTEventSink<BGSInventoryItemEvent::Event>					es8; // D0
+	BSTEventSink<FavoriteMgr_Events::ComponentFavoriteEvent>	es9; // D8
+	BSTEventSink<PlayerDifficultySettingChanged::Event>			es10; // E0
+	PipboyObject*												inventoryObject; // E8
 
+	// 10
+	struct HSF0Entry
+	{
+		UInt32 formid; // ?
+		void** unk08;
+
+		void Dump()
+		{
+			_MESSAGE("formid:  %08X", formid);
+			DumpClass(unk08, 10);
+			DumpClass(*(void***)*unk08,10);
+		}
+	};
+	
+	tHashSet<HSF0Entry, UInt32>							hsF0; // something related to sorting?
+
+	// 10
+	struct HS120Entry
+	{
+		BGSComponent* component;
+		PipboyObject* object;
+
+		operator BGSComponent *() const { return component; }
+
+		static inline UInt32 GetHash(BGSComponent ** key)
+		{
+			UInt32 hash;
+			CalculateCRC32_64(&hash, (UInt64)*key, 0);
+			return hash;
+		}
+		void Dump()
+		{
+			tracePipboyObject(object);
+		}
+	};
+
+	tHashSet<HS120Entry, BGSComponent*>					hs120;
+	tArray<PipboyObject*>								inventoryObjects;				// 150
+	tHashSet<UInt32>									hs168;	// contain FormTypes for update?
 };
 STATIC_ASSERT(sizeof(PipboyInventoryData) == 0x198);
 
@@ -2162,24 +2294,3 @@ public:
 	void*								unk808;
 };
 STATIC_ASSERT(sizeof(ExamineMenu) == 0x810);
-
-#include "ScaleformLoader.h"
-// --------------------------------------------------------------
-// ------------------------------ VI ----------------------------
-// --------------------------------------------------------------
-
-extern RVA <BSScaleformManager*> x_g_scaleformManager;
-typedef bool(*_x_LoadMovie)(BSScaleformManager* manager, IMenu * menu, GFxMovieView *&, const char * name, const char * stagePath, UInt32 flags);
-extern RVA <_x_LoadMovie> x_LoadMovie;
-typedef void(*_x_CreateBaseShaderTarget)(BSGFxShaderFXTarget * & component, GFxValue & stage);
-extern RVA <_x_CreateBaseShaderTarget> x_CreateBaseShaderTarget;
-
-
-extern RVA <UI*> x_g_ui;
-typedef void(*_x_SendUIMessage)(UIMessageManager* manager, BSFixedString& menuName, unsigned int menuAction);
-extern RVA <_x_SendUIMessage> x_SendUIMessage;
-extern RVA <UIMessageManager*> x_g_uiMessageManager;
-
-// --------------------------------------------------------------
-// ------------------------------ VI ----------------------------
-// --------------------------------------------------------------

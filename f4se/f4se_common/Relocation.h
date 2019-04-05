@@ -1,4 +1,5 @@
 #pragma once
+#include "common/IPrefix.h"
 
 class RelocationManager
 {
@@ -21,11 +22,13 @@ public:
 
 	operator T *() const
 	{
+		//_MESSAGE(__FUNCTION__);
 		return GetPtr();
 	}
 
 	T * operator->() const
 	{
+		//_MESSAGE(__FUNCTION__);
 		return GetPtr();
 	}
 
@@ -44,13 +47,30 @@ public:
 		return m_offset;
 	}
 
+	RelocPtr & operator=(RelocPtr & rhs)
+	{
+		m_offset = rhs.m_offset;
+	}
+
+	RelocPtr & operator=(T * rhs)
+	{
+		m_offset = reinterpret_cast<uintptr_t>(rhs);
+		//_MESSAGE("%s=%08X", __FUNCTION__, m_offset);
+		return (*this);
+	}
+
+	RelocPtr & operator=(uintptr_t rhs)
+	{
+		m_offset = rhs + RelocationManager::s_baseAddr;
+		//_MESSAGE("%s=%08X", __FUNCTION__, m_offset);
+		return (*this);
+	}
 private:
 	uintptr_t	m_offset;
 
 	// hide
 	RelocPtr();
 	RelocPtr(RelocPtr & rhs);
-	RelocPtr & operator=(RelocPtr & rhs);
 };
 
 // use this for direct addresses to types T. needed to avoid ambiguity
@@ -66,6 +86,7 @@ public:
 
 	operator T()
 	{
+		//_MESSAGE(__FUNCTION__);
 		return reinterpret_cast <T>(m_offset);
 	}
 
@@ -74,6 +95,12 @@ public:
 		return reinterpret_cast <uintptr_t>(m_offset);
 	}
 
+	RelocAddr& operator=(T rhs)
+	{
+		m_offset = reinterpret_cast <BlockConversionType *>(reinterpret_cast<uintptr_t>(rhs) - RelocationManager::s_baseAddr);
+		//_MESSAGE("%s=%08X", __FUNCTION__, m_offset);
+		return (*this);
+	}
 private:
 	// apparently you can't reinterpret_cast from a type to the same type
 	// that's kind of stupid and makes it impossible to use this for uintptr_ts if I use the same type
@@ -85,5 +112,5 @@ private:
 	// hide
 	RelocAddr();
 	RelocAddr(RelocAddr & rhs);
-	RelocAddr & operator=(RelocAddr & rhs);
+	//RelocAddr & operator=(RelocAddr & rhs);
 };

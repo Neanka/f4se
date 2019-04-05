@@ -1,4 +1,0 @@
-LIBRARY	"template"
-EXPORTS
-F4SEPlugin_Query
-F4SEPlugin_Load

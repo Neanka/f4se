@@ -57,6 +57,14 @@ public:
 	VMValue currentSleepless;
 };
 
+struct PlayerStatsEx
+{
+public:
+	VMValue stat[6];
+};
+
 void UpdateValues_int();
 
 void UpdateValues_int_HMO(PlayerStats* stats);
+
+void UpdateValues_int_HMO(PlayerStatsEx * stats);

@@ -77,6 +77,23 @@ float fSleepBarScaleY = 1.0;
 float fSleepBarRotation = 0.0;
 UInt8 iSleepBarVisible = 1;
 
+/*
+VMValue maxHunger;
+VMValue maxThirst;
+VMValue maxSleepless;
+VMValue currentHunger;
+VMValue currentThirst;
+VMValue currentSleepless;
+*/
+bool readStatsIdxs = false;
+int iMaxHungerIdx = 0;
+int iMaxThirstIdx = 1;
+int iMaxSleeplessIdx = 2;
+int iCurrentHungerIdx = 3;
+int iCurrentThirstIdx = 4;
+int iCurrentSleeplessIdx = 5;
+
+
 #define ReadSettingMainInt(key)	\
 	key = GetPrivateProfileInt("Main", #key, key, "./Data/MCM/Settings/SSW.ini"); \
 	_MESSAGE("%s=%i", #key, key);
@@ -223,7 +240,7 @@ public:
 		{
 		case kMessage_UpdateModSettings:
 		{
-			_MESSAGE("UpdateModSettings");
+			//_MESSAGE("UpdateModSettings");
 
 			if (isHMO)
 			{
@@ -306,7 +323,7 @@ public:
 		}
 		case kMessage_UpdateValues:
 		{
-			_MESSAGE("UpdateValues");
+			//_MESSAGE("UpdateValues");
 
 			ValueToSet.SetInt(iFoodPool);
 			root->SetVariable("root.Menu_mc.iFoodPool", &ValueToSet);
@@ -338,7 +355,7 @@ public:
 		}
 		case kMessage_UpdateAmounts:
 		{
-			_MESSAGE("UpdateAmounts");
+			//_MESSAGE("UpdateAmounts");
 
 			ValueToSet.SetInt(iSleepPoolIncapacitatedAmount);
 			root->SetVariable("root.Menu_mc.iSleepPoolIncapacitatedAmount", &ValueToSet);
@@ -568,6 +585,11 @@ void FindHMOScriptIdentifier()
 	if (HMOScriptIdentifier)
 	{
 		_MESSAGE("HMO_CoreSCRIPT script identifier found");
+		//VMValue playerstats;
+		//if (GetScriptVariableValue(HMOScriptIdentifier, "PlayerStats", &playerstats))
+		//{
+		//	playerstats.data.strct->m_type->m_members.Dump();
+		//}
 		iFoodPoolStarvingAmount = -1000;
 		iDrinkPoolSeverelyDehydratedAmount= -1000;
 		iSleepPoolIncapacitatedAmount = -1000;
@@ -774,14 +796,14 @@ void* ScriptFunctionReg_Hook(ScriptFunction* param1, ScriptFunctionRegParam2* pa
 	if (!_strcmpi("DamageFatigue", param2->functionName.c_str()) && !_strcmpi("hardcore:hc_managerscript", param2->scriptName.c_str())) // using DamageFatigue instead of ApplyEffect
 	{
 		_MESSAGE("hardcore:hc_managerscript.ApplyEffect() function address found");
-		DumpClass(param2, 0x10);
+		//DumpClass(param2, 0x10);
 		numScriptsHookCount += 1;
 		HC_ApplyEffectFunction = param1;
 	}
 	if (!_strcmpi("EvaluateStats", param2->functionName.c_str()) && !_strcmpi("HMO_CoreSCRIPT", param2->scriptName.c_str()))
 	{
 		_MESSAGE("HMO_CoreSCRIPT.OnTimer() function address found");
-		DumpClass(param2,0x10);
+		//DumpClass(param2,0x10);
 		numScriptsHookCount += 1;
 		HMO_OnTimerFunction1 = param1;
 	}
@@ -853,21 +875,98 @@ void UpdateValues_int_HMO(PlayerStats* stats)
 		SSW_Menu::UpdateValues();
 }
 
+void UpdateValues_int_HMO(PlayerStatsEx* stats)
+{
+
+	iFoodPool = -(SInt32)stats->stat[iCurrentHungerIdx].data.f;
+	//_MESSAGE("FoodPool %d", iFoodPool);
+
+	iDrinkPool = -(SInt32)stats->stat[iCurrentThirstIdx].data.f;
+	//_MESSAGE("DrinkPool %d", iDrinkPool);
+
+	iSleepPool = -(SInt32)stats->stat[iCurrentSleeplessIdx].data.f;
+	//_MESSAGE("SleepPool %d", iSleepPool);
+
+	iFoodPoolStarvingAmount = -(SInt32)stats->stat[iMaxHungerIdx].data.f;
+	//_MESSAGE("FoodPoolStarvingAmount %d", iFoodPoolStarvingAmount);
+
+	iDrinkPoolSeverelyDehydratedAmount = -(SInt32)stats->stat[iMaxThirstIdx].data.f;
+	//_MESSAGE("DrinkPoolSeverelyDehydratedAmount %d", iDrinkPoolSeverelyDehydratedAmount);
+
+	iSleepPoolIncapacitatedAmount = -(SInt32)stats->stat[iMaxSleeplessIdx].data.f;
+	//_MESSAGE("SleepPoolIncapacitatedAmount %d", iSleepPoolIncapacitatedAmount);
+
+	SSW_Menu::UpdateAmounts();
+	SSW_Menu::UpdateValues();
+}
+
 UInt32 ScriptFunction_Invoke_Hook(ScriptFunction* param1, void* param2, void* param3, VirtualMachine* param4, UInt8 param5) {
 
 	if (isHMO)
 	{
 		if (HMO_OnTimerFunction1 && param1 == HMO_OnTimerFunction1)
 		{
-			_MESSAGE("HMO_OnTimer Hook");
+			//_MESSAGE("HMO_OnTimer Hook");
 			VMValue playerstats;
-			PlayerStats * playerstatsvalues;
+			PlayerStatsEx * playerstatsvalues;
+			VMStructTypeInfo::MemberItem* mi;
 
 			if (HMOScriptIdentifier)
 			{
 				if (GetScriptVariableValue(HMOScriptIdentifier, "PlayerStats", &playerstats))
 				{
-					playerstatsvalues = (PlayerStats*)&playerstats.data.strct->m_value;
+					//playerstats.data.strct->m_type->m_members.Dump();
+					if (!readStatsIdxs)
+					{
+						/*
+						bool readStatsIdxs = false;
+						int iMaxHungerIdx = 0;
+						int iMaxThirstIdx = 1;
+						int iMaxSleeplessIdx = 2;
+						int iCurrentHungerIdx = 3;
+						int iCurrentThirstIdx = 4;
+						int iCurrentSleeplessIdx = 5;
+						*/
+
+						mi = playerstats.data.strct->m_type->m_members.Find(&BSFixedString("maxHunger"));
+						if (mi)
+						{
+							iMaxHungerIdx = mi->index;
+							_MESSAGE("iMaxHungerIdx: %i", iMaxHungerIdx);							
+						}
+						mi = playerstats.data.strct->m_type->m_members.Find(&BSFixedString("maxThirst"));
+						if (mi)
+						{
+							iMaxThirstIdx = mi->index;
+							_MESSAGE("iMaxThirstIdx: %i", iMaxThirstIdx);
+						}
+						mi = playerstats.data.strct->m_type->m_members.Find(&BSFixedString("maxSleepless"));
+						if (mi)
+						{
+							iMaxSleeplessIdx = mi->index;
+							_MESSAGE("iMaxSleeplessIdx: %i", iMaxSleeplessIdx);
+						}
+						mi = playerstats.data.strct->m_type->m_members.Find(&BSFixedString("currentHunger"));
+						if (mi)
+						{
+							iCurrentHungerIdx = mi->index;
+							_MESSAGE("iCurrentHungerIdx: %i", iCurrentHungerIdx);
+						}
+						mi = playerstats.data.strct->m_type->m_members.Find(&BSFixedString("currentThirst"));
+						if (mi)
+						{
+							iCurrentThirstIdx = mi->index;
+							_MESSAGE("iCurrentThirstIdx: %i", iCurrentThirstIdx);
+						}
+						mi = playerstats.data.strct->m_type->m_members.Find(&BSFixedString("currentSleepless"));
+						if (mi)
+						{
+							iCurrentSleeplessIdx = mi->index;
+							_MESSAGE("iCurrentSleeplessIdx: %i", iCurrentSleeplessIdx);
+						}
+						readStatsIdxs = true;
+					}
+					playerstatsvalues = (PlayerStatsEx*)&playerstats.data.strct->m_value;
 					UpdateValues_int_HMO(playerstatsvalues);
 				}
 			}
@@ -877,7 +976,7 @@ UInt32 ScriptFunction_Invoke_Hook(ScriptFunction* param1, void* param2, void* pa
 	{
 		if (HC_ApplyEffectFunction && param1 == HC_ApplyEffectFunction)
 		{
-			_MESSAGE("ApplyEffect Hook");
+			//_MESSAGE("ApplyEffect Hook");
 			UpdateValues_int();
 		}
 	}

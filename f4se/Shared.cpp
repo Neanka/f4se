@@ -1005,7 +1005,7 @@ void tracePipboyObject(PipboyObject* obj)
 };
 
 
-RelocPtr <ItemMenuDataManager*> g_itemMenuDataMgr(0x58D4980); // 1 10 130 // 48 8B FA 48 8B D9 74 ? 48 8B D1   0x11, 3, 8);
+RelocPtr <ItemMenuDataManager*> g_itemMenuDataMgr(0x58D4980); // 1 10 130 // 48 8B FA 48 8B D9 74 ? 48 8B D1   11, 3, 7);
 RelocAddr <_getInventoryItemByHandleID> getInventoryItemByHandleID(0x001A3650); // 1 10 106 !!!
 
 BGSInventoryItem* getInventoryItemByIndex(UInt32 index)
@@ -1308,37 +1308,3 @@ void traceVMValue(VMValue* val)
 }
 
 
-
-// --------------------------------------------------------------
-// ------------------------------ VI ----------------------------
-// --------------------------------------------------------------
-
-RVA <BSScaleformManager*> x_g_scaleformManager;
-RVA <_x_LoadMovie> x_LoadMovie;
-RVA <_x_CreateBaseShaderTarget> x_CreateBaseShaderTarget;
-
-RVA <UI*> x_g_ui;
-RVA <_x_SendUIMessage> x_SendUIMessage;
-RVA <UIMessageManager*> x_g_uiMessageManager;
-
-void InitVIAddresses()
-{
-	x_g_scaleformManager = RVA <BSScaleformManager*>(
-		"x_g_scaleformManager", "48 8B 0D ? ? ? ? 48 8D 05 ? ? ? ? 48 8B D3", 0, 3, 7);
-	x_LoadMovie = RVA <_x_LoadMovie>(
-		"x_LoadMovie", "48 8B C4 4C 89 40 18 48 89 48 08 55 56 57 41 54 41 57");
-	x_CreateBaseShaderTarget = RVA <_x_CreateBaseShaderTarget>(
-		"x_CreateBaseShaderTarget", "E8 ? ? ? ? 49 8B 9E 88 00 00 00 4C 8D 05", 0, 1, 5);
-
-
-	x_g_ui = RVA <UI*>(
-		"x_g_ui", "48 8B 0D ? ? ? ? BA ? ? ? ? 8B 1C 16", 0, 3, 7);
-	x_SendUIMessage = RVA <_x_SendUIMessage>(
-		"x_SendUIMessage", "48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 48 89 7C 24 20 41 54 41 56 41 57 48 83 EC 20 44 8B 0D ? ? ? ? 65 48 8B 04 25 58 00 00 00 48 8B E9 4A 8B 34 C8 B9 C0 09 00 00");
-	x_g_uiMessageManager = RVA <UIMessageManager*>(
-		"x_g_uiMessageManager", "48 8B 3D ? ? ? ? E8 ? ? ? ? 41 B8 01 00 00 00 48 8B CF 48 8B D0", 0, 3, 7);
-}
-
-// --------------------------------------------------------------
-// ------------------------------ VI ----------------------------
-// --------------------------------------------------------------

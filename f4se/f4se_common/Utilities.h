@@ -16,7 +16,7 @@
 
 #define MEMBER_FN_PREFIX(className)	\
 	typedef className _MEMBER_FN_BASE_TYPE
-
+/*
 #define DEFINE_MEMBER_FN_LONG(className, functionName, retnType, address, ...)		\
 	typedef retnType (className::* _##functionName##_type)(__VA_ARGS__);			\
 																					\
@@ -26,6 +26,15 @@
 		_address = address + RelocationManager::s_baseAddr;							\
 		return (_##functionName##_type *)&_address;									\
 	}
+*/	
+#define DEFINE_MEMBER_FN_LONG(className, functionName, retnType, address, ...)		\
+typedef retnType (className::* _##functionName##_type)(__VA_ARGS__);			\
+\
+inline _##functionName##_type * _##functionName##_GetPtr(void)					\
+{																				\
+static uintptr_t _address = address + RelocationManager::s_baseAddr;		\
+return (_##functionName##_type *)&_address;									\
+}
 
 #define DEFINE_MEMBER_FN(functionName, retnType, address, ...)	\
 	DEFINE_MEMBER_FN_LONG(_MEMBER_FN_BASE_TYPE, functionName, retnType, address, __VA_ARGS__)
@@ -57,6 +66,69 @@
 
 #define CALL_MEMBER_FN(obj, fn)	\
 	((*(obj)).*(*((obj)->_##fn##_GetPtr())))
+
+#define SET_MEMBER_FN(className, fnName)										\
+	className##::_##fnName##_GetFnPtr()
+
+
+
+#define FORCE_INLINE  __forceinline
+#define DEF_MEMBER_FN(fnName, retnType, addr, ...)								\
+	template <class... Params>													\
+	FORCE_INLINE retnType fnName(Params&&... params) {							\
+		struct empty_struct {};													\
+		typedef retnType(empty_struct::*_##fnName##_type)(__VA_ARGS__);			\
+		const static uintptr_t address = _##fnName##_GetFnPtr();				\
+		_##fnName##_type fn = *(_##fnName##_type*)&address;						\
+		return (reinterpret_cast<empty_struct*>(this)->*fn)(params...);			\
+	}																			\
+	static uintptr_t & _##fnName##_GetFnPtr()	{								\
+		static uintptr_t relMem = addr + RelocationManager::s_baseAddr;			\
+		return relMem;															\
+	}
+//public:
+
+#define DEFINE_MEMBER_FUNCTION(fnName, retnType, addr, ...)						\
+		template <class... Params>													\
+	FORCE_INLINE retnType fnName(Params&&... params) {							\
+		struct empty_struct {};													\
+		typedef retnType(empty_struct::*_##fnName##_type)(__VA_ARGS__);			\
+		const static uintptr_t address = addr + RelocationManager::s_baseAddr;	\
+		_##fnName##_type fn = *(_##fnName##_type*)&address;						\
+		return (reinterpret_cast<empty_struct*>(this)->*fn)(params...);			\
+	}
+
+//#define DEF_MEMBER_FN_CONST(fnName, retnType, addr, ...)				\
+//	template <class... Params>													\
+//	FORCE_INLINE retnType fnName(Params&&... params) const {					\
+//		struct empty_struct {};													\
+//		typedef retnType(empty_struct::*_##fnName##_type)(__VA_ARGS__) const;	\
+//		const static uintptr_t address = addr + RelocationManager::s_baseAddr;	\
+//		_##fnName##_type fn = *(_##fnName##_type*)&address;						\
+//		return (reinterpret_cast<const empty_struct*>(this)->*fn)(params...);	\
+//	}
+#define DEF_MEMBER_FN_CONST(fnName, retnType, addr, ...)						\
+	template <class... Params>													\
+	FORCE_INLINE retnType fnName(Params&&... params) const {					\
+		struct empty_struct {};													\
+		typedef retnType(empty_struct::*_##fnName##_type)(__VA_ARGS__) const;	\
+		const static uintptr_t address = _##fnName##_GetFnPtr();				\
+		_##fnName##_type fn = *(_##fnName##_type*)&address;						\
+		return (reinterpret_cast<const empty_struct*>(this)->*fn)(params...);	\
+	}																			\
+	static uintptr_t & _##fnName##_GetFnPtr()	{								\
+		static uintptr_t relMem = addr + RelocationManager::s_baseAddr;			\
+		return relMem;															\
+	}
+
+
+#define DEFINE_STATIC_FN(fnName, retnType, addr, ...)							\
+	template <class... Params>													\
+	FORCE_INLINE static retnType fnName(Params&&... params) {					\
+		typedef retnType(*Fn)(__VA_ARGS__);										\
+		const Fn fn = (Fn)(addr + RelocationManager::s_baseAddr);				\
+		return fn(params...);													\
+	}
 
 
 // Using the original implementation does very broken things in a Release build

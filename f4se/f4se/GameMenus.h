@@ -338,32 +338,6 @@ public:
 };
 STATIC_ASSERT(offsetof(PipboyPrimitiveValue<bool>, value) == 0x18);
 
-class PipboyObject : public PipboyValue
-{
-public:
-	struct PipboyTableItem
-	{
-		BSFixedString	key;
-		PipboyValue		*value;
-
-		bool operator==(const BSFixedString & a_name) const { return key == a_name; }
-		operator BSFixedString() const { return key; }
-
-		static inline UInt32 GetHash(BSFixedString * key)
-		{
-			UInt32 hash;
-			CalculateCRC32_64(&hash, (UInt64)key->data, 0);
-			return hash;
-		}
-	};
-
-
-	virtual ~PipboyObject();
-
-	tHashSet<PipboyTableItem, BSFixedString>	table;	// 18
-	//...
-};
-STATIC_ASSERT(offsetof(PipboyObject, table) == 0x18);
 
 // 00C
 class MenuTableItem
